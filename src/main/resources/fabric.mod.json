@@ -40,7 +40,7 @@
   "description": "Minecraft Mod to generate a world from an image !",
   "entrypoints": {
     "main": [
-      "eu.28Pollux28.genmap.GenMap"
+      "eu.pollux28.genmap.GenMap"
     ]
   },
   "environment": "*",

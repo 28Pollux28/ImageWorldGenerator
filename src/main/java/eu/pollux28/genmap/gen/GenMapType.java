@@ -1,5 +1,5 @@
 package eu.pollux28.genmap.gen;
-
+//Code used from Simplex Terrain <https://github.com/SuperCoder7979/simplexterrain>, with permission from SuperCoder79
 import eu.pollux28.genmap.gen.biomes.GenMapBiomeSource;
 import eu.pollux28.genmap.gen.chunk.GenMapChunkGenerator;
 import net.minecraft.client.world.GeneratorType;
