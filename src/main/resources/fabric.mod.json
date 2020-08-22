@@ -1,0 +1,59 @@
+{
+  "accessWidener" : "genmap.aw",
+  "authors": [
+    {
+      "name": "28Pollux28",
+      "contact": {
+        "homepage": ""
+      }
+    },"28Pollux28"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/28Pollux28/GenMap"
+  },
+  "contributors": [
+    {
+      "name": "Jiogo18",
+      "contact": {
+        "homepage": "https://github.com/Jiogo18"
+      }
+    },
+    {
+      "name": "Octanne",
+      "contact": {
+        "homepage": "https://github.com/Octanne"
+      }
+    },
+    {
+      "name": "Simon511000",
+      "contact": {
+        "homepage": "https://github.com/simon511000"
+      }
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": "1.16.1"
+  },
+  "description": "Minecraft Mod to generate a world from an image !",
+  "entrypoints": {
+    "main": [
+      "eu.28Pollux28.genmap.GenMap"
+    ]
+  },
+  "environment": "*",
+  "icon": "assets/genmap/icon.png",
+  "id": "genmap",
+  "license": "LGPL-3.0",
+  "mixins": [
+    "genmap.mixins.json"
+  ],
+  "name": "GenMap",
+  "schemaVersion": 1,
+  "suggests": {
+    "flamingo": "*"
+  },
+  "version": "1.0.0"
+}
