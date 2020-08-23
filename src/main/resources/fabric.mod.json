@@ -39,6 +39,9 @@
   "entrypoints": {
     "main": [
       "eu.pollux28.genmap.GenMap"
+    ],
+    "modmenu": [
+      "eu.pollux28.genmap.client.GenMapModMenuImpl"
     ]
   },
   "environment": "*",

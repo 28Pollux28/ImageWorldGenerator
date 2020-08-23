@@ -18,9 +18,22 @@ dependencies {
 	minecraft "com.mojang:minecraft:1.16.1"
 	mappings "net.fabricmc:yarn:1.16.1+build.21:v2"
 	modImplementation "net.fabricmc:fabric-loader:0.9.2+build.206"
-
 	//Fabric api
 	modImplementation "net.fabricmc.fabric-api:fabric-api:0.17.0+build.386-1.16.1"
+	// ModMenu pour accéder à la page de config
+	modApi("io.github.prospector:modmenu:${project.modmenu_version}")
+
+	// Librairies pour créer la page de config : https://shedaniel.gitbook.io/cloth-config/
+	// include() permet d'inclure les librairies directement dans Edora afin d'éviter de devoir les télécharger séparément
+	include("me.shedaniel.cloth:config-2:${project.cloth_config_api_version}")
+	modApi("me.shedaniel.cloth:config-2:${project.cloth_config_api_version}") {
+		exclude(group: "net.fabricmc.fabric-api")
+	}
+	include("me.sargunvohra.mcmods:autoconfig1u:${project.auto_config1u_version}")
+	modApi("me.sargunvohra.mcmods:autoconfig1u:${project.auto_config1u_version}") {
+		exclude(group: "net.fabricmc.fabric-api")
+
+	}
 }
 
 processResources {
