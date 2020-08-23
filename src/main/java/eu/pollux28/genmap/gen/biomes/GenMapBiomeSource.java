@@ -15,10 +15,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Stream;
 
 public class GenMapBiomeSource extends BiomeSource {
@@ -50,6 +48,7 @@ public class GenMapBiomeSource extends BiomeSource {
     private HashMap<Integer,Biome> colorsForBiome = new HashMap<>();
     private final Biome defaultBiome = Biomes.OCEAN;
     private Random rand = new Random();
+    private int scale;
 
 
     public GenMapBiomeSource(long seed) {
@@ -85,14 +84,14 @@ public class GenMapBiomeSource extends BiomeSource {
     }
 
     private void generateCache() {
-        BufferedImage newImg = new BufferedImage(sizeX*2,sizeZ*2,BufferedImage.TRANSLUCENT);
+        BufferedImage newImg = new BufferedImage(sizeX*scale, sizeZ*scale,BufferedImage.TRANSLUCENT);
         Graphics2D g2 = newImg.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING,RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 
 
-        g2.drawImage(image,0,0,sizeX*2,sizeZ*2,null);
+        g2.drawImage(image,0,0, sizeX*scale, sizeZ*scale,null);
         g2.dispose();
         //EdoraMain.log(Level.WARN, "newImg : "+ newImg.getWidth()+ " "+ newImg.getHeight());
         try {
@@ -104,8 +103,8 @@ public class GenMapBiomeSource extends BiomeSource {
             e.printStackTrace();
         }
 
-        for(int ix=0 ;ix<sizeX*2;ix++){
-            for(int iz=0; iz<sizeZ*2;iz++){
+        for(int ix = 0; ix< sizeX *scale; ix++){
+            for(int iz = 0; iz< sizeZ *scale; iz++){
                 int RGB = newImg.getRGB(ix, iz)&0xFFFFFF;
                 //List<Integer> coo= ImmutableList.of(ix, iz);
                 Vec3i vec = new Vec3i(ix-sizeX, 0, iz-sizeZ);
@@ -126,24 +125,65 @@ public class GenMapBiomeSource extends BiomeSource {
 
     }
 
-    public Biome getBiomeFromCache(int x, int z){
-
-        int rd = rand.nextInt(3)-1;
-
-        Vec3i vec = new Vec3i((x), 0, (z));
-        if(imgSet){
-            return BiomePosCache.getOrDefault(vec,defaultBiome);
-        }else{
-
-            return defaultBiome;
+    private static class BiomeCount {
+        private Biome b;
+        public int count;
+        public final Biome biome() { return b; }
+        public BiomeCount(Biome b) {
+            this.b = b;
+            count = 0;
         }
+        public Boolean equals(final Biome b) { return b == this.b; }
+    }
+    public Biome getBiomeFromCache(int x, int z){
+        if(!imgSet)
+            return defaultBiome;
+
+        //x & z are xBlock/4 & zBlock/4
+        // => 1/16 of a chunk
+        int xBase = x/scale;
+        int zBase = z/scale;
+
+        Biome currentBiome = BiomePosCache.getOrDefault(new Vec3i(xBase, 0, zBase), defaultBiome);
+        Set<BiomeCount> biomesArround = new HashSet<>();
+
+        for(int iz = -2; iz<= 2; iz++) {
+            for(int ix = -2; ix<= 2; ix++) {
+                Biome b;
+                if(iz == 0 && ix == 0)
+                    b = currentBiome;
+                else
+                    b = BiomePosCache.getOrDefault(new Vec3i((xBase+ix)/scale, 0, (zBase+iz)/scale), currentBiome);
+                BiomeCount bc = new BiomeCount(b);
+                if(!biomesArround.contains(bc)) {
+                    biomesArround.add(bc);
+                }
+                else {
+                    for(BiomeCount bci : biomesArround) {
+                        if(bci.biome() == b) {
+                            bci.count++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        int bestBiomeCount = 0;
+        for(BiomeCount b : biomesArround) {
+            if(bestBiomeCount < b.count) {
+                bestBiomeCount = b.count;
+                currentBiome = b.biome();
+            }
+        }
+
+        return currentBiome;
     }
 
     public static BufferedImage setImage(String pathname){
         BufferedImage img = null;
         try {
             //available: map_1.png, Edora_island.png
-            img = ImageIO.read(GenMap.class.getResourceAsStream("/assets/edora/map/Edora_island.png"/*pathname*/));
+            img = ImageIO.read(GenMap.class.getResourceAsStream("/assets/genmap/map/Edora_island.png"/*pathname*/));
 
         } catch (IOException ignored) {}
 

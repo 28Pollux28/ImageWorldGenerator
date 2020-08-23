@@ -6,13 +6,7 @@
       "contact": {
         "homepage": ""
       }
-    },"28Pollux28"
-  ],
-  "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/28Pollux28/GenMap"
-  },
-  "contributors": [
+    },
     {
       "name": "Jiogo18",
       "contact": {
@@ -32,6 +26,10 @@
       }
     }
   ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/28Pollux28/GenMap"
+  },
   "depends": {
     "fabricloader": ">=0.7.4",
     "fabric": "*",

@@ -4,7 +4,8 @@
   "package": "eu.pollux28.genmap.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-  "MixinGeneratorOptions"
+    "MixinGeneratorOptions",
+    "MixinLakesGenerator"
   ],
   "injectors": {
     "defaultRequire": 1
