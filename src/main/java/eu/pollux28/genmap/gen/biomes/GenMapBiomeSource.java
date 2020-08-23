@@ -3,7 +3,9 @@ package eu.pollux28.genmap.gen.biomes;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import eu.pollux28.genmap.GenMap;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
@@ -15,6 +17,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
@@ -45,6 +49,7 @@ public class GenMapBiomeSource extends BiomeSource {
     private boolean imgSet = false;
     private int sizeX, sizeZ;
     private final HashMap<Vec3i, Biome> BiomePosCache = new HashMap<>();
+    private final HashMap<Integer,Biome> biomesRefColors = new HashMap<>();
     private HashMap<Integer,Biome> colorsForBiome = new HashMap<>();
     private final Biome defaultBiome = Biomes.OCEAN;
     private Random rand = new Random();
@@ -54,14 +59,13 @@ public class GenMapBiomeSource extends BiomeSource {
     public GenMapBiomeSource(long seed) {
         super(biomes);
         this.seed=seed;
-        this.image = setImage("null");
+        this.image = setImage(GenMap.config.imageName);
         if(this.image==null) {
             //EdoraMain.log(Level.FATAL, "Could not find image at "+" ! Generating a stub world.");
         }else{
             //EdoraMain.log(Level.INFO, "Image Found, generating cache");
-            this.sizeX = image.getWidth();
-            this.sizeZ= image.getHeight();
             this.imgSet = true;
+            loadBiomes();
             generateCache();
         }
     }
@@ -83,34 +87,38 @@ public class GenMapBiomeSource extends BiomeSource {
         return new GenMapBiomeSource(seed);
     }
 
+    private void loadBiomes(){
+        Stream.of(BiomesC.values()).parallel().forEach(biomesC -> biomesRefColors.putIfAbsent(biomesC.getRGB(),biomesC.getBiome()));
+        GenMap.config.aList.parallelStream().forEach(biomeIDAndRGBPair -> {
+        Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
+            if(bID!=null){
+                Biome biome = getBiomebyID(bID);
+                if(biome!=null){
+                    if(!biomesRefColors.containsKey(biomeIDAndRGBPair.RGB)){
+                        biomesRefColors.put(biomeIDAndRGBPair.RGB, biome);
+                    }else GenMap.logger.log(Level.ERROR,"Biome with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+ "already exists !, Please choose a different Color Code.");
+                }else{
+                    if(!biomeIDAndRGBPair.biomeID.equals("modid:biomeid")){
+                        GenMap.logger.log(Level.ERROR, "Couldn't find biome at "+biomeIDAndRGBPair.biomeID);
+                    }
+                }
+            }else{
+                GenMap.logger.log(Level.ERROR,"Incorrect biomeID format. Expected modid:biomeid, got "+ biomeIDAndRGBPair.biomeID);
+            }
+        });
+    }
+
+
+
     private void generateCache() {
-        BufferedImage newImg = new BufferedImage(sizeX*scale, sizeZ*scale,BufferedImage.TRANSLUCENT);
-        Graphics2D g2 = newImg.createGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING,RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-
-
-        g2.drawImage(image,0,0, sizeX*scale, sizeZ*scale,null);
-        g2.dispose();
-        //EdoraMain.log(Level.WARN, "newImg : "+ newImg.getWidth()+ " "+ newImg.getHeight());
-        try {
-            ImageIO.write(newImg, "jpg", new File("/image.jpg"));
-            //EdoraMain.log(Level.WARN, "image");
-        } catch (IOException e) {
-
-            //EdoraMain.log(Level.ERROR, "rien");
-            e.printStackTrace();
-        }
-
+        if(image==null) return;
         for(int ix = 0; ix< sizeX *scale; ix++){
             for(int iz = 0; iz< sizeZ *scale; iz++){
-                int RGB = newImg.getRGB(ix, iz)&0xFFFFFF;
-                //List<Integer> coo= ImmutableList.of(ix, iz);
+                int RGB = image.getRGB(ix, iz)&0xFFFFFF;
                 Vec3i vec = new Vec3i(ix-sizeX, 0, iz-sizeZ);
 
                 if(!this.colorsForBiome.containsKey(RGB)){
-                    Biome biome = Stream.of(BiomesC.values()).parallel().min(Comparator.comparingDouble((bt1) -> getColorDiff(RGB, bt1.getRGB()))).get().getBiome();
+                    Biome biome = biomesRefColors.entrySet().parallelStream().min(Comparator.comparingDouble((bt1) -> getColorDiff(RGB, bt1.getKey()))).get().getValue();
                     this.colorsForBiome.put(RGB, biome);
                 }
                 this.BiomePosCache.put(vec,this.colorsForBiome.get(RGB));
@@ -159,37 +167,77 @@ public class GenMapBiomeSource extends BiomeSource {
                     biomesArround.add(bc);
                 }
                 else {
-                    for(BiomeCount bci : biomesArround) {
+                    biomesArround.parallelStream().forEach(bci -> {
+                        if (bci.biome()==b){
+                            bci.count++;
+                        }
+                    });
+                    /*for(BiomeCount bci : biomesArround) {
                         if(bci.biome() == b) {
                             bci.count++;
                             break;
                         }
-                    }
+                    }*/
                 }
             }
         }
-        int bestBiomeCount = 0;
-        for(BiomeCount b : biomesArround) {
+        //int bestBiomeCount = 0;
+        return biomesArround.parallelStream().max(Comparator.comparingInt((bci) -> {
+            return bci.count;
+        })).get().biome();
+
+        /*for(BiomeCount b : biomesArround) {
             if(bestBiomeCount < b.count) {
                 bestBiomeCount = b.count;
                 currentBiome = b.biome();
             }
         }
 
-        return currentBiome;
+        return currentBiome;*/
     }
 
-    public static BufferedImage setImage(String pathname){
+    public BufferedImage setImage(String pathname){
         BufferedImage img = null;
         try {
+            Path configDir = Paths.get("", "genmap", "image", pathname);
             //available: map_1.png, Edora_island.png
-            img = ImageIO.read(GenMap.class.getResourceAsStream("/assets/genmap/map/Edora_island.png"/*pathname*/));
+            img = ImageIO.read(configDir.toFile());
 
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            e.getCause();
+            GenMap.logger.log(Level.ERROR,"Couldn't find image at /genmap/image/"+pathname);
+        }
+        if (img!=null){
+            scale = GenMap.config.scale;
+            if(scale>0) {
+                BufferedImage newImg = new BufferedImage((img.getWidth()) * scale, img.getHeight() * scale, BufferedImage.TRANSLUCENT);
+                Graphics2D g2 = newImg.createGraphics();
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 
+
+                g2.drawImage(img, 0, 0, img.getWidth() * scale, img.getHeight() * scale, null);
+                g2.dispose();
+                sizeX = newImg.getWidth();
+                sizeZ = newImg.getHeight();
+                return newImg;
+            }else GenMap.logger.log(Level.ERROR,"Scale must be > 0, got : "+scale);
+        }
         return img;
     }
-
+    public Biome getBiomebyID(Identifier biomeID){
+        return Registry.BIOME.get(biomeID);
+    }
+    private Identifier getIdFromString(String biomeID) {
+        String[] str = biomeID.toLowerCase().split(":");
+        if (str.length!=2){
+            return null;
+        }else return new Identifier(str[0],str[1]);
+    }
+    public Identifier getBiomeId(Biome biome) {
+        return Registry.BIOME.getId(biome);
+    }
     public enum BiomesC{
         //default biomes
         Plains(0x82A84A, Biomes.PLAINS),
