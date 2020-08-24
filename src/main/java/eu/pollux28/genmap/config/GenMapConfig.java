@@ -14,22 +14,15 @@ import java.util.List;
 
 @Config(name = "genmap")
 public class GenMapConfig implements ConfigData {
-    public boolean test = false;
     public String imageName = "";
     public int scale = 1;
 
 
-    @ConfigEntry.Gui.CollapsibleObject
-    InnerStuff stuff = new InnerStuff();
+
 
     @ConfigEntry.Gui.Excluded
     @ConfigEntry.Gui.PrefixText()
-    public List<BiomeIDAndRGBPair> aList = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid",0x000000),new BiomeIDAndRGBPair("modid:biomeid",0xFFFFFF));
-
-    static class InnerStuff {
-        int a = 0;
-        int b = 1;
-    }
+    public List<BiomeIDAndRGBPair> aList = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
 
     public static class BiomeIDAndRGBPair {
 
@@ -39,9 +32,13 @@ public class GenMapConfig implements ConfigData {
 
 
 
-        BiomeIDAndRGBPair(String biomeID, int RGB) {
+        BiomeIDAndRGBPair(String biomeID, String RGB) {
             this.biomeID = biomeID;
-            this.RGB = RGB;
+            try {
+                this.RGB = Integer.decode(RGB);
+            }catch (NumberFormatException e ){
+                this.RGB =-1;
+            }
         }
     }
 

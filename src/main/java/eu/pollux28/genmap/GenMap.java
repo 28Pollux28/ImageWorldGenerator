@@ -33,6 +33,5 @@ public class GenMap implements ModInitializer {
         if (!Files.isDirectory(genMapDir)){
             genMapDir.toFile().mkdirs();
         }
-
     }
 }

@@ -48,6 +48,7 @@ public class GenMapBiomeSource extends BiomeSource {
     private int sizeX, sizeZ;
     private final HashMap<Vec3i, Biome> BiomePosCache = new HashMap<>();
     private final Int2ObjectOpenHashMap<Biome> biomesRefColors = new Int2ObjectOpenHashMap<>();
+
     private final Int2ObjectOpenHashMap<Biome> colorsForBiome = new Int2ObjectOpenHashMap<>();
     private final Biome defaultBiome = Biomes.OCEAN;
     private int scale;
@@ -82,13 +83,23 @@ public class GenMapBiomeSource extends BiomeSource {
     private void loadBiomes(){
         Stream.of(BiomesC.values()).parallel().forEach(biomesC -> biomesRefColors.putIfAbsent(biomesC.getRGB(),biomesC.getBiome()));
         GenMap.config.aList.parallelStream().forEach(biomeIDAndRGBPair -> {
-        Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
+            Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
+            if (biomeIDAndRGBPair.RGB==-1){
+                GenMap.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
+                        "0xRRGGBB using hexadecimal code.");
+                return;
+            }
             if(bID!=null){
                 Biome biome = getBiomebyID(bID);
                 if(biome!=null){
-                    if(!biomesRefColors.containsKey(biomeIDAndRGBPair.RGB)){
-                        biomesRefColors.put(biomeIDAndRGBPair.RGB, biome);
-                    }else GenMap.logger.log(Level.ERROR,"Biome with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+ "already exists !, Please choose a different Color Code.");
+                    Biome b2 =biomesRefColors.merge(biomeIDAndRGBPair.RGB,biome,(v1, v2) ->{
+                        GenMap.logger.log(Level.ERROR,"Color code with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+
+                                "already exists !, Please choose a different Color Code for biome "+biomeIDAndRGBPair.biomeID);
+                        return v1;
+                    });
+                    if (b2 == biome){
+                        GenMap.logger.log(Level.INFO,"Biome "+biomeIDAndRGBPair.biomeID + " registered with color code: "+biomeIDAndRGBPair.RGB);
+                    }
                 }else{
                     if(!biomeIDAndRGBPair.biomeID.equals("modid:biomeid")){
                         GenMap.logger.log(Level.ERROR, "Couldn't find biome at "+biomeIDAndRGBPair.biomeID);
@@ -100,7 +111,7 @@ public class GenMapBiomeSource extends BiomeSource {
         });
     }
 
-
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private void generateCache() {
         if(image==null) return;
         for(int ix = 0; ix< sizeX *scale; ix++){
@@ -109,7 +120,8 @@ public class GenMapBiomeSource extends BiomeSource {
                 Vec3i vec = new Vec3i(ix-sizeX, 0, iz-sizeZ);
 
                 if(!this.colorsForBiome.containsKey(RGB)){
-                    Biome biome = biomesRefColors.int2ObjectEntrySet().parallelStream().min(Comparator.comparingDouble((bt1) -> getColorDiff(RGB, bt1.getIntKey()))).get().getValue();
+                    Biome biome = biomesRefColors.int2ObjectEntrySet().parallelStream().min(Comparator.comparingDouble(
+                            (bt1) -> getColorDiff(RGB, bt1.getIntKey()))).get().getValue();
                     this.colorsForBiome.put(RGB, biome);
                 }
                 this.BiomePosCache.put(vec,this.colorsForBiome.get(RGB));
@@ -211,41 +223,86 @@ public class GenMapBiomeSource extends BiomeSource {
     }*/
     public enum BiomesC{
         //default biomes
-        Plains(0x82A84A, Biomes.PLAINS),
-        Desert(0xD8C377, Biomes.DESERT),
-        Savanna(0xAAAE55, Biomes.SAVANNA),
-        Shattered_Savanna(0xB9A762,Biomes.SHATTERED_SAVANNA),
-        Jungle(0x38821D,Biomes.JUNGLE),
-        Jungle_Edge(0x3F7A24,Biomes.JUNGLE_EDGE),
-        Swamp(0x4C9B59, Biomes.SWAMP),
-        Sunflower_Plains(0x4F9F28,Biomes.SUNFLOWER_PLAINS),
-        Forest(0x3A5223, Biomes.FOREST),
-        Taiga(0x597C4A,Biomes.TAIGA),
-        Snowy_Tundra(0xE5F4FF,Biomes.SNOWY_TUNDRA),
-        Dark_Forest(0x2E7B40,Biomes.DARK_FOREST),
-        //High Biomes
-        Mountains(0xC0CDB7, Biomes.MOUNTAINS),
-        Gravelly_Mountains(0x9fA8A5,Biomes.GRAVELLY_MOUNTAINS),
-        Modified_Gravelly_Mountains(0xE5E5E5,Biomes.MODIFIED_GRAVELLY_MOUNTAINS),
-        Badlands(0xC9934F,Biomes.BADLANDS),
-        Wooded_Badlands_Plateau(0xA09D44,Biomes.WOODED_BADLANDS_PLATEAU),
-        Eroded_Badlands(0x7F5D33,Biomes.ERODED_BADLANDS),
-        //Weird
-        Basalt_Deltas(0x28241B,Biomes.BASALT_DELTAS),
-        //water related
-        Beach(0xE5D495, Biomes.BEACH),
-        River(0x4086BF,Biomes.RIVER),
-        Ocean(0x3672C9, Biomes.OCEAN),
-        Deep_Ocean(0x02598D,Biomes.OCEAN),
-        Warm_Ocean(0x00B7E5,Biomes.WARM_OCEAN);
+        Ocean(0x000070, Biomes.OCEAN),
+        Plains(0x8DB360, Biomes.PLAINS),
+        Desert(0xFA947C, Biomes.DESERT),
+        Mountains(0x606060, Biomes.MOUNTAINS),
+        Forest(0x056621, Biomes.FOREST),
+        Taiga(0x0B0259,Biomes.TAIGA),
+        Swamp(0x07F9B3, Biomes.SWAMP),
+        River(0x0000FF,Biomes.RIVER),
+        Nether_Wastes(0xFF0000,Biomes.NETHER_WASTES),
+        The_End(0x8080FF,Biomes.THE_END),
+        Frozen_Ocean(0x7070D6,Biomes.FROZEN_OCEAN),
+        Frozen_River(0xA0A0FF,Biomes.FROZEN_RIVER),
+        Snowy_Tundra(0xFFFFFF,Biomes.SNOWY_TUNDRA),
+        Snowy_Mountains(0xA0A0A0, Biomes.SNOWY_MOUNTAINS),
+        Mushroom_Fields(0xFF00FF,Biomes.MUSHROOM_FIELDS),
+        Mushroom_Field_Shore(0xA000FF,Biomes.MUSHROOM_FIELD_SHORE),
+        Beach(0xFADE55, Biomes.BEACH),
+        Desert_Hills(0xD25F12,Biomes.DESERT_HILLS),
+        Wooded_Hills(0x22551C,Biomes.WOODED_HILLS),
+        Taiga_Hills(0x163933,Biomes.TAIGA_HILLS),
+        Mountain_Edge(0x72789A,Biomes.MOUNTAIN_EDGE),
+        Jungle(0x537B09,Biomes.JUNGLE),
+        Jungle_Hills(0x2C4205,Biomes.JUNGLE_HILLS),
+        Jungle_Edge(0x628817,Biomes.JUNGLE_EDGE),
+        Deep_Ocean(0x000030,Biomes.OCEAN),
+        Stone_Shore(0xA2A284,Biomes.STONE_SHORE),
+        Snowy_Beach(0xFAF0C0,Biomes.SNOWY_BEACH),
+        Birch_Forest(0x307444,Biomes.BIRCH_FOREST),
+        Birch_Forest_Hills(0x1F0532,Biomes.BIRCH_FOREST_HILLS),
+        Dark_Forest(0x40511A,Biomes.DARK_FOREST),
+        Snowy_Taiga(0x31554A,Biomes.SNOWY_TAIGA),
+        Snowy_Taiga_Hills(0x243F36,Biomes.SNOWY_TAIGA_HILLS),
+        Giant_Tree_Taiga(0x596651,Biomes.GIANT_TREE_TAIGA),
+        Giant_Tree_Taiga_Hills(0x45073E,Biomes.GIANT_TREE_TAIGA_HILLS),
+        Wooded_Mountains(0x507050,Biomes.WOODED_MOUNTAINS),
+        Savanna(0xBD125F, Biomes.SAVANNA),
+        Savanna_Plateau(0xA79D64, Biomes.SAVANNA_PLATEAU),
+        Badlands(0xD94515,Biomes.BADLANDS),
+        Wooded_Badlands_Plateau(0x119765,Biomes.WOODED_BADLANDS_PLATEAU),
+        Badlands_Plateau(0xCA8C65,Biomes.BADLANDS_PLATEAU),
+        Small_End_Island(0x8080FF,Biomes.SMALL_END_ISLANDS),
+        End_Midlands(0x8080FF,Biomes.END_MIDLANDS),
+        End_HighLands(0x8080FF,Biomes.END_HIGHLANDS),
+        End_Barrens(0x8080FF,Biomes.END_BARRENS),
+        Warm_Ocean(0x0000AC,Biomes.WARM_OCEAN),
+        Lukewarm_Ocean(0x000090,Biomes.LUKEWARM_OCEAN),
+        Cold_Ocean(0x202070,Biomes.COLD_OCEAN),
+        Deep_Warm_Ocean(0x000050,Biomes.DEEP_WARM_OCEAN),
+        Deep_Lukewarm_Ocean(0x000040,Biomes.DEEP_LUKEWARM_OCEAN),
+        Deep_Cold_Ocean(0x202038,Biomes.DEEP_COLD_OCEAN),
+        Deep_Frozen_Ocean(0x404090, Biomes.DEEP_FROZEN_OCEAN),
+        The_Void(0x000000,Biomes.THE_END),
+        Sunflower_Plains(0xB5D888,Biomes.SUNFLOWER_PLAINS),
+        Desert_Lakes(0xFFBC40,Biomes.DESERT_LAKES),
+        Gravelly_Mountains(0x888888,Biomes.GRAVELLY_MOUNTAINS),
+        Flower_Forest(0x2D8E49,Biomes.FLOWER_FOREST),
+        Taiga_Mountains(0x338E13,Biomes.TAIGA_MOUNTAINS),
+        Swamp_Hills(0x2FFF12,Biomes.SWAMP_HILLS),
+        Ice_Spikes(0xB414DC, Biomes.ICE_SPIKES),
+        Modified_Jungle(0x7B0D31,Biomes.MODIFIED_JUNGLE),
+        Modified_Jungle_Edge(0x8AB33F,Biomes.MODIFIED_JUNGLE_EDGE),
+        Tall_Birch_Forest(0x589C6C,Biomes.TALL_BIRCH_FOREST),
+        Tall_Birch_Hills(0x470F5A,Biomes.TALL_BIRCH_HILLS),
+        Dark_Forest_Hills(0x68794,Biomes.DARK_FOREST_HILLS),
+        Snowy_Taiga_Mountains(0x597D72,Biomes.SNOWY_TAIGA_MOUNTAINS),
+        Giant_Spruce_Taiga(0x818E79,Biomes.GIANT_TREE_TAIGA),
+        Giant_Spruce_Taiga_Hills(0x6D7766,Biomes.GIANT_TREE_TAIGA_HILLS),
+        Modified_Gravelly_Mountains(0x783478,Biomes.MODIFIED_GRAVELLY_MOUNTAINS),
+        Shattered_Savanna(0xE5DA87,Biomes.SHATTERED_SAVANNA),
+        Shattered_Savanna_Plateau(0xCFC58C,Biomes.SHATTERED_SAVANNA_PLATEAU),
+        Eroded_Badlands(0xFF6D3D,Biomes.ERODED_BADLANDS),
+        Modified_Wooded_Badlands_Plateau(0xD8BF8D,Biomes.MODIFIED_WOODED_BADLANDS_PLATEAU),
+        Modified_Badlands_Plateau(0xF2B48D,Biomes.MODIFIED_BADLANDS_PLATEAU),
+        Bamboo_Jungle(0x768E14,Biomes.BAMBOO_JUNGLE),
+        Bamboo_Jungle_Hills(0x3B470A,Biomes.BAMBOO_JUNGLE_HILLS),
 
-        /*Mountains(0xA0AAA6, Biomes.GRAVELLY_MOUNTAINS),
-        Water_Source(0x034A8C, Biomes.RIVER),
-        Dirty(0x675834, Biomes.TAIGA),
-        Mesa(0x27241A, Biomes.BADLANDS_PLATEAU),
-        Magic_Forest(0x02D7B3, Biomes.JUNGLE),
-        Snowy(0xE6E6E6, Biomes.ICE_SPIKES),
-        MountainEdge(0xBEC1B6,Biomes.MOUNTAIN_EDGE);*/
+        Soul_Sand_Valley(0x522921,Biomes.SOUL_SAND_VALLEY),
+        Crimson_Forest(0xDD0808,Biomes.CRIMSON_FOREST),
+        Warped_Forest(0x49907B,Biomes.WARPED_FOREST),
+        Basalt_Deltas(0x403636,Biomes.BASALT_DELTAS);
         int RGB;
         Biome biome;
         BiomesC(int RGB, Biome biome){
