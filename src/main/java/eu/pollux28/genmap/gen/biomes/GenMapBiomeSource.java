@@ -3,10 +3,10 @@ package eu.pollux28.genmap.gen.biomes;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import eu.pollux28.genmap.GenMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.Heightmap;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.biome.source.BiomeSource;
@@ -15,19 +15,18 @@ import org.apache.logging.log4j.Level;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class GenMapBiomeSource extends BiomeSource {
 
     public static final Codec<GenMapBiomeSource> CODEC = Codec.LONG.fieldOf("seed").xmap(GenMapBiomeSource::new, (source) -> source.seed).stable().codec();
 
-    private static final List<Biome> biomes = ImmutableList.of(Biomes.OCEAN, Biomes.PLAINS, Biomes.DESERT, Biomes.MOUNTAINS,
+    /*private static final List<Biome> biomes = ImmutableList.of(Biomes.OCEAN, Biomes.PLAINS, Biomes.DESERT, Biomes.MOUNTAINS,
             Biomes.FOREST, Biomes.TAIGA, Biomes.SWAMP, Biomes.RIVER, Biomes.SNOWY_TUNDRA,
             Biomes.SNOWY_MOUNTAINS, Biomes.MUSHROOM_FIELDS, Biomes.MUSHROOM_FIELD_SHORE, Biomes.BEACH, Biomes.DESERT_HILLS, Biomes.WOODED_HILLS,
             Biomes.TAIGA_HILLS, Biomes.MOUNTAIN_EDGE, Biomes.JUNGLE, Biomes.JUNGLE_HILLS, Biomes.JUNGLE_EDGE, Biomes.DEEP_OCEAN,
@@ -40,19 +39,17 @@ public class GenMapBiomeSource extends BiomeSource {
             Biomes.TALL_BIRCH_FOREST, Biomes.TALL_BIRCH_HILLS, Biomes.DARK_FOREST_HILLS, Biomes.SNOWY_TAIGA_MOUNTAINS,
             Biomes.GIANT_SPRUCE_TAIGA, Biomes.GIANT_SPRUCE_TAIGA_HILLS, Biomes.MODIFIED_GRAVELLY_MOUNTAINS,
             Biomes.SHATTERED_SAVANNA, Biomes.SHATTERED_SAVANNA_PLATEAU, Biomes.ERODED_BADLANDS,
-            Biomes.MODIFIED_WOODED_BADLANDS_PLATEAU, Biomes.MODIFIED_BADLANDS_PLATEAU, Biomes.THE_VOID,Biomes.BASALT_DELTAS);
+            Biomes.MODIFIED_WOODED_BADLANDS_PLATEAU, Biomes.MODIFIED_BADLANDS_PLATEAU, Biomes.THE_VOID,Biomes.BASALT_DELTAS);*/
+    private static final List<Biome>biomes = ImmutableList.copyOf(Biome.BIOMES);
 
     private final long seed;
-
-    private Heightmap heightmap;
     private final BufferedImage image;
     private boolean imgSet = false;
     private int sizeX, sizeZ;
     private final HashMap<Vec3i, Biome> BiomePosCache = new HashMap<>();
-    private final HashMap<Integer,Biome> biomesRefColors = new HashMap<>();
-    private HashMap<Integer,Biome> colorsForBiome = new HashMap<>();
+    private final Int2ObjectOpenHashMap<Biome> biomesRefColors = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectOpenHashMap<Biome> colorsForBiome = new Int2ObjectOpenHashMap<>();
     private final Biome defaultBiome = Biomes.OCEAN;
-    private Random rand = new Random();
     private int scale;
 
 
@@ -60,17 +57,12 @@ public class GenMapBiomeSource extends BiomeSource {
         super(biomes);
         this.seed=seed;
         this.image = setImage(GenMap.config.imageName);
-        if(this.image==null) {
+        if(this.image!=null) {
             //EdoraMain.log(Level.FATAL, "Could not find image at "+" ! Generating a stub world.");
-        }else{
-            //EdoraMain.log(Level.INFO, "Image Found, generating cache");
             this.imgSet = true;
             loadBiomes();
             generateCache();
         }
-    }
-    public void setHeightmap(Heightmap heightmap) {
-        this.heightmap = heightmap;
     }
     @Override
     public Biome getBiomeForNoiseGen(int biomeX, int biomeY, int biomeZ) {
@@ -109,7 +101,6 @@ public class GenMapBiomeSource extends BiomeSource {
     }
 
 
-
     private void generateCache() {
         if(image==null) return;
         for(int ix = 0; ix< sizeX *scale; ix++){
@@ -118,14 +109,14 @@ public class GenMapBiomeSource extends BiomeSource {
                 Vec3i vec = new Vec3i(ix-sizeX, 0, iz-sizeZ);
 
                 if(!this.colorsForBiome.containsKey(RGB)){
-                    Biome biome = biomesRefColors.entrySet().parallelStream().min(Comparator.comparingDouble((bt1) -> getColorDiff(RGB, bt1.getKey()))).get().getValue();
+                    Biome biome = biomesRefColors.int2ObjectEntrySet().parallelStream().min(Comparator.comparingDouble((bt1) -> getColorDiff(RGB, bt1.getIntKey()))).get().getValue();
                     this.colorsForBiome.put(RGB, biome);
                 }
                 this.BiomePosCache.put(vec,this.colorsForBiome.get(RGB));
             }
         }
 
-        colorsForBiome = null;
+        colorsForBiome.clear();
     }
 
     private static double getColorDiff(int RGB, int btRGB){
@@ -134,15 +125,16 @@ public class GenMapBiomeSource extends BiomeSource {
     }
 
     private static class BiomeCount {
-        private Biome b;
+        private final Biome b;
         public int count;
         public final Biome biome() { return b; }
         public BiomeCount(Biome b) {
             this.b = b;
             count = 0;
         }
-        public Boolean equals(final Biome b) { return b == this.b; }
+        //public Boolean equals(final Biome b) { return b == this.b; }
     }
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     public Biome getBiomeFromCache(int x, int z){
         if(!imgSet)
             return defaultBiome;
@@ -163,37 +155,16 @@ public class GenMapBiomeSource extends BiomeSource {
                 else
                     b = BiomePosCache.getOrDefault(new Vec3i((xBase+ix)/scale, 0, (zBase+iz)/scale), currentBiome);
                 BiomeCount bc = new BiomeCount(b);
-                if(!biomesArround.contains(bc)) {
-                    biomesArround.add(bc);
-                }
-                else {
+                if(!biomesArround.add(bc)) {
                     biomesArround.parallelStream().forEach(bci -> {
                         if (bci.biome()==b){
                             bci.count++;
                         }
                     });
-                    /*for(BiomeCount bci : biomesArround) {
-                        if(bci.biome() == b) {
-                            bci.count++;
-                            break;
-                        }
-                    }*/
                 }
             }
         }
-        //int bestBiomeCount = 0;
-        return biomesArround.parallelStream().max(Comparator.comparingInt((bci) -> {
-            return bci.count;
-        })).get().biome();
-
-        /*for(BiomeCount b : biomesArround) {
-            if(bestBiomeCount < b.count) {
-                bestBiomeCount = b.count;
-                currentBiome = b.biome();
-            }
-        }
-
-        return currentBiome;*/
+        return biomesArround.parallelStream().max(Comparator.comparingInt((bci) -> bci.count)).get().biome();
     }
 
     public BufferedImage setImage(String pathname){
@@ -235,9 +206,9 @@ public class GenMapBiomeSource extends BiomeSource {
             return null;
         }else return new Identifier(str[0],str[1]);
     }
-    public Identifier getBiomeId(Biome biome) {
+    /*public Identifier getBiomeId(Biome biome) {
         return Registry.BIOME.getId(biome);
-    }
+    }*/
     public enum BiomesC{
         //default biomes
         Plains(0x82A84A, Biomes.PLAINS),
