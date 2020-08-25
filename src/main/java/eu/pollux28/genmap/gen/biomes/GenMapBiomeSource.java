@@ -298,7 +298,6 @@ public class GenMapBiomeSource extends BiomeSource {
         Modified_Badlands_Plateau(0xF2B48D,Biomes.MODIFIED_BADLANDS_PLATEAU),
         Bamboo_Jungle(0x768E14,Biomes.BAMBOO_JUNGLE),
         Bamboo_Jungle_Hills(0x3B470A,Biomes.BAMBOO_JUNGLE_HILLS),
-
         Soul_Sand_Valley(0x522921,Biomes.SOUL_SAND_VALLEY),
         Crimson_Forest(0xDD0808,Biomes.CRIMSON_FOREST),
         Warped_Forest(0x49907B,Biomes.WARPED_FOREST),
