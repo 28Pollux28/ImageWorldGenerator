@@ -23,7 +23,7 @@ public class ImgGenConfig implements ConfigData {
 
 
         public String biomeID;
-        public int RGB= 0x000000;
+        public int RGB;
 
 
 
