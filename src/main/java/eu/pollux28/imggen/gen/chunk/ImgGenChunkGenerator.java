@@ -1,8 +1,8 @@
-package eu.pollux28.genmap.gen.chunk;
+package eu.pollux28.imggen.gen.chunk;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import eu.pollux28.genmap.gen.biomes.GenMapBiomeSource;
+import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
@@ -38,7 +38,7 @@ import java.util.Random;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
-public class GenMapChunkGenerator extends ChunkGenerator{
+public class ImgGenChunkGenerator extends ChunkGenerator{
     private final long seed;
     private final BiomeSource biomeSource;
     protected final ChunkGeneratorType chunkGeneratorType;
@@ -79,7 +79,7 @@ public class GenMapChunkGenerator extends ChunkGenerator{
     protected final BlockState defaultFluid;
     private final int field_24779;
 
-    public GenMapChunkGenerator(BiomeSource biomeSource, long seed, ChunkGeneratorType chunkGeneratorType) {
+    public ImgGenChunkGenerator(BiomeSource biomeSource, long seed, ChunkGeneratorType chunkGeneratorType) {
         super(biomeSource, new StructuresConfig(true));
         this.biomeSource=biomeSource;
         this.chunkGeneratorType=chunkGeneratorType;
@@ -110,16 +110,16 @@ public class GenMapChunkGenerator extends ChunkGenerator{
     }
 
 	/*public static void registerChunkGenerator() {
-		Registry.register(Registry.CHUNK_GENERATOR, EdoraMain.MOD_FULL_ID, GenMapChunkGenerator.CODEC);
+		Registry.register(Registry.CHUNK_GENERATOR, EdoraMain.MOD_FULL_ID, ImgGenChunkGenerator.CODEC);
 	}*/
 
-    public static final Codec<GenMapChunkGenerator> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
+    public static final Codec<ImgGenChunkGenerator> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
             BiomeSource.field_24713.fieldOf("biome_source").forGetter((generator) -> generator.biomeSource),
             Codec.LONG.fieldOf("seed").stable().forGetter((generator) -> generator.seed),
             ChunkGeneratorType.field_24781.fieldOf("settings").forGetter((surfaceChunkGenerator) -> {
                 return surfaceChunkGenerator.chunkGeneratorType;
             }))
-            .apply(instance, instance.stable(GenMapChunkGenerator::new)));
+            .apply(instance, instance.stable(ImgGenChunkGenerator::new)));
 
     @Override
     protected Codec<? extends ChunkGenerator> method_28506() {
@@ -128,7 +128,7 @@ public class GenMapChunkGenerator extends ChunkGenerator{
 
     @Environment(EnvType.CLIENT)
     public ChunkGenerator withSeed(long seed) {
-        return new GenMapChunkGenerator(new GenMapBiomeSource(seed), seed,this.chunkGeneratorType);
+        return new ImgGenChunkGenerator(new ImgGenBiomeSource(seed), seed,this.chunkGeneratorType);
     }
     /*@Override
     public int getSeaLevel() {

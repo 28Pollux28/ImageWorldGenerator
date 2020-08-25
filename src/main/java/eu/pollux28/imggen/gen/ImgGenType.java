@@ -1,20 +1,20 @@
-package eu.pollux28.genmap.gen;
+package eu.pollux28.imggen.gen;
 //Code used from Simplex Terrain <https://github.com/SuperCoder7979/simplexterrain>, with permission from SuperCoder79
-import eu.pollux28.genmap.gen.biomes.GenMapBiomeSource;
-import eu.pollux28.genmap.gen.chunk.GenMapChunkGenerator;
+import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
+import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import net.minecraft.client.world.GeneratorType;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.ChunkGeneratorType;
 
-public class GenMapType extends GeneratorType {
-    public GenMapType(String translationKey){
-        super("genmap");
+public class ImgGenType extends GeneratorType {
+    public ImgGenType(String translationKey){
+        super("imggen");
         GeneratorType.VALUES.add(this);
     }
 
     @Override
     protected ChunkGenerator method_29076(long l) {
-        return new GenMapChunkGenerator(new GenMapBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType());
+        return new ImgGenChunkGenerator(new ImgGenBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType());
     }
 
 }

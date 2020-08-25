@@ -1,20 +1,15 @@
-package eu.pollux28.genmap.config;
+package eu.pollux28.imggen.config;
 
 import me.sargunvohra.mcmods.autoconfig1u.ConfigData;
 import me.sargunvohra.mcmods.autoconfig1u.annotation.Config;
 import me.sargunvohra.mcmods.autoconfig1u.annotation.ConfigEntry;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.Biomes;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-@Config(name = "genmap")
-public class GenMapConfig implements ConfigData {
-    public String imageName = "";
+@Config(name = "imggen")
+public class ImgGenConfig implements ConfigData {
+    public String imageName = "defaultImage.jpg";
     public int scale = 1;
 
 

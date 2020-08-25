@@ -1,8 +1,7 @@
-package eu.pollux28.genmap.mixins;
+package eu.pollux28.imggen.mixins;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.LakeFeature;

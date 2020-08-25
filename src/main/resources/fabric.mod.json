@@ -1,12 +1,20 @@
 {
-  "accessWidener" : "genmap.aw",
+  "accessWidener" : "imggen.access",
   "authors": [
     {
       "name": "28Pollux28",
       "contact": {
-        "homepage": ""
+        "homepage": "https://github.com/28Pollux28"
       }
-    },
+    }
+
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/28Pollux28/ImageWorldGenerator",
+    "issues": "https://github.com/28Pollux28/ImageWorldGenerator/issues"
+  },
+  "contributors": [
     {
       "name": "Jiogo18",
       "contact": {
@@ -26,10 +34,6 @@
       }
     }
   ],
-  "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/28Pollux28/GenMap"
-  },
   "depends": {
     "fabricloader": ">=0.7.4",
     "fabric": "*",
@@ -38,20 +42,20 @@
   "description": "Minecraft Mod to generate a world from an image !",
   "entrypoints": {
     "main": [
-      "eu.pollux28.genmap.GenMap"
+      "eu.pollux28.imggen.ImgGen"
     ],
     "modmenu": [
-      "eu.pollux28.genmap.client.GenMapModMenuImpl"
+      "eu.pollux28.imggen.client.ImgGenModMenuImpl"
     ]
   },
   "environment": "*",
-  "icon": "assets/genmap/icon.png",
-  "id": "genmap",
+  "icon": "assets/imggen/icon.png",
+  "id": "imggen",
   "license": "LGPL-3.0",
   "mixins": [
-    "genmap.mixins.json"
+    "imggen.mixins.json"
   ],
-  "name": "GenMap",
+  "name": "Image World Generator",
   "schemaVersion": 1,
   "suggests": {
     "flamingo": "*"

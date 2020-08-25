@@ -1,7 +1,7 @@
-package eu.pollux28.genmap;
+package eu.pollux28.imggen;
 
-import eu.pollux28.genmap.config.GenMapConfig;
-import eu.pollux28.genmap.gen.GenMapType;
+import eu.pollux28.imggen.config.ImgGenConfig;
+import eu.pollux28.imggen.gen.ImgGenType;
 import me.sargunvohra.mcmods.autoconfig1u.AutoConfig;
 import me.sargunvohra.mcmods.autoconfig1u.serializer.GsonConfigSerializer;
 import net.fabricmc.api.EnvType;
@@ -15,21 +15,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 
-public class GenMap implements ModInitializer {
+public class ImgGen implements ModInitializer {
     public static Logger logger = LogManager.getLogger();
-    public static GenMapType levelGeneratorType;
-    public static GenMapConfig config;
+    public static ImgGenType levelGeneratorType;
+    public static ImgGenConfig config;
 
 
     @Override
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void onInitialize() {
         if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT){
-            levelGeneratorType = new GenMapType("genmap");
+            levelGeneratorType = new ImgGenType("imggen");
         }
-        AutoConfig.register(GenMapConfig.class, GsonConfigSerializer::new);
-        config = AutoConfig.getConfigHolder(GenMapConfig.class).getConfig();
-        Path genMapDir = Paths.get("", "genmap","image");
+        AutoConfig.register(ImgGenConfig.class, GsonConfigSerializer::new);
+        config = AutoConfig.getConfigHolder(ImgGenConfig.class).getConfig();
+        Path genMapDir = Paths.get("", "imggen","image");
         if (!Files.isDirectory(genMapDir)){
             genMapDir.toFile().mkdirs();
         }

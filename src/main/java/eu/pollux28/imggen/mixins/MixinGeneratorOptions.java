@@ -1,10 +1,10 @@
-package eu.pollux28.genmap.mixins;
+package eu.pollux28.imggen.mixins;
 
 //Code used from Simplex Terrain <https://github.com/SuperCoder7979/simplexterrain>, with permission from SuperCoder79
 
 import com.google.common.base.MoreObjects;
-import eu.pollux28.genmap.gen.biomes.GenMapBiomeSource;
-import eu.pollux28.genmap.gen.chunk.GenMapChunkGenerator;
+import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
+import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
@@ -27,7 +27,7 @@ public class MixinGeneratorOptions {
             return;
         }
 
-        if (properties.get("level-type").toString().trim().toLowerCase().equals("genmap")) {
+        if (properties.get("level-type").toString().trim().toLowerCase().equals("imggen")) {
 
             String seed = (String) MoreObjects.firstNonNull(properties.get("level-seed"), "");
             long l = new Random().nextLong();
@@ -46,7 +46,7 @@ public class MixinGeneratorOptions {
 
             String generate_structures = (String)properties.get("generate-structures");
             boolean generateStructures = generate_structures == null || Boolean.parseBoolean(generate_structures);
-            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensions, new GenMapChunkGenerator(new GenMapBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType()))));
+            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensions, new ImgGenChunkGenerator(new ImgGenBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType()))));
         }
     }
 }

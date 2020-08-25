@@ -1,8 +1,8 @@
-package eu.pollux28.genmap.gen.biomes;
+package eu.pollux28.imggen.gen.biomes;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
-import eu.pollux28.genmap.GenMap;
+import eu.pollux28.imggen.ImgGen;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3i;
@@ -22,9 +22,9 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class GenMapBiomeSource extends BiomeSource {
+public class ImgGenBiomeSource extends BiomeSource {
 
-    public static final Codec<GenMapBiomeSource> CODEC = Codec.LONG.fieldOf("seed").xmap(GenMapBiomeSource::new, (source) -> source.seed).stable().codec();
+    public static final Codec<ImgGenBiomeSource> CODEC = Codec.LONG.fieldOf("seed").xmap(ImgGenBiomeSource::new, (source) -> source.seed).stable().codec();
 
     /*private static final List<Biome> biomes = ImmutableList.of(Biomes.OCEAN, Biomes.PLAINS, Biomes.DESERT, Biomes.MOUNTAINS,
             Biomes.FOREST, Biomes.TAIGA, Biomes.SWAMP, Biomes.RIVER, Biomes.SNOWY_TUNDRA,
@@ -54,10 +54,10 @@ public class GenMapBiomeSource extends BiomeSource {
     private int scale;
 
 
-    public GenMapBiomeSource(long seed) {
+    public ImgGenBiomeSource(long seed) {
         super(biomes);
         this.seed=seed;
-        this.image = setImage(GenMap.config.imageName);
+        this.image = setImage(ImgGen.config.imageName);
         if(this.image!=null) {
             //EdoraMain.log(Level.FATAL, "Could not find image at "+" ! Generating a stub world.");
             this.imgSet = true;
@@ -77,15 +77,15 @@ public class GenMapBiomeSource extends BiomeSource {
 
     @Override
     public BiomeSource withSeed(long seed) {
-        return new GenMapBiomeSource(seed);
+        return new ImgGenBiomeSource(seed);
     }
 
     private void loadBiomes(){
         Stream.of(BiomesC.values()).parallel().forEach(biomesC -> biomesRefColors.putIfAbsent(biomesC.getRGB(),biomesC.getBiome()));
-        GenMap.config.aList.parallelStream().forEach(biomeIDAndRGBPair -> {
+        ImgGen.config.aList.parallelStream().forEach(biomeIDAndRGBPair -> {
             Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
             if (biomeIDAndRGBPair.RGB==-1){
-                GenMap.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
+                ImgGen.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
                         "0xRRGGBB using hexadecimal code.");
                 return;
             }
@@ -93,20 +93,20 @@ public class GenMapBiomeSource extends BiomeSource {
                 Biome biome = getBiomebyID(bID);
                 if(biome!=null){
                     Biome b2 =biomesRefColors.merge(biomeIDAndRGBPair.RGB,biome,(v1, v2) ->{
-                        GenMap.logger.log(Level.ERROR,"Color code with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+
+                        ImgGen.logger.log(Level.ERROR,"Color code with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+
                                 "already exists !, Please choose a different Color Code for biome "+biomeIDAndRGBPair.biomeID);
                         return v1;
                     });
                     if (b2 == biome){
-                        GenMap.logger.log(Level.INFO,"Biome "+biomeIDAndRGBPair.biomeID + " registered with color code: "+biomeIDAndRGBPair.RGB);
+                        ImgGen.logger.log(Level.INFO,"Biome "+biomeIDAndRGBPair.biomeID + " registered with color code: "+biomeIDAndRGBPair.RGB);
                     }
                 }else{
                     if(!biomeIDAndRGBPair.biomeID.equals("modid:biomeid")){
-                        GenMap.logger.log(Level.ERROR, "Couldn't find biome at "+biomeIDAndRGBPair.biomeID);
+                        ImgGen.logger.log(Level.ERROR, "Couldn't find biome at "+biomeIDAndRGBPair.biomeID);
                     }
                 }
             }else{
-                GenMap.logger.log(Level.ERROR,"Incorrect biomeID format. Expected modid:biomeid, got "+ biomeIDAndRGBPair.biomeID);
+                ImgGen.logger.log(Level.ERROR,"Incorrect biomeID format. Expected modid:biomeid, got "+ biomeIDAndRGBPair.biomeID);
             }
         });
     }
@@ -182,16 +182,16 @@ public class GenMapBiomeSource extends BiomeSource {
     public BufferedImage setImage(String pathname){
         BufferedImage img = null;
         try {
-            Path configDir = Paths.get("", "genmap", "image", pathname);
+            Path configDir = Paths.get("", "imggen", "image", pathname);
             //available: map_1.png, Edora_island.png
             img = ImageIO.read(configDir.toFile());
 
         } catch (IOException e) {
             e.getCause();
-            GenMap.logger.log(Level.ERROR,"Couldn't find image at /genmap/image/"+pathname);
+            ImgGen.logger.log(Level.ERROR,"Couldn't find image at /imggen/image/"+pathname);
         }
         if (img!=null){
-            scale = GenMap.config.scale;
+            scale = ImgGen.config.scale;
             if(scale>0) {
                 BufferedImage newImg = new BufferedImage((img.getWidth()) * scale, img.getHeight() * scale, BufferedImage.TRANSLUCENT);
                 Graphics2D g2 = newImg.createGraphics();
@@ -205,7 +205,7 @@ public class GenMapBiomeSource extends BiomeSource {
                 sizeX = newImg.getWidth();
                 sizeZ = newImg.getHeight();
                 return newImg;
-            }else GenMap.logger.log(Level.ERROR,"Scale must be > 0, got : "+scale);
+            }else ImgGen.logger.log(Level.ERROR,"Scale must be > 0, got : "+scale);
         }
         return img;
     }
