@@ -2,11 +2,15 @@ package eu.pollux28.imggen;
 
 import eu.pollux28.imggen.config.ImgGenConfig;
 import eu.pollux28.imggen.gen.ImgGenType;
+import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
+import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import me.sargunvohra.mcmods.autoconfig1u.AutoConfig;
 import me.sargunvohra.mcmods.autoconfig1u.serializer.GsonConfigSerializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,5 +37,8 @@ public class ImgGen implements ModInitializer {
         if (!Files.isDirectory(genMapDir)){
             genMapDir.toFile().mkdirs();
         }
+        Registry.register(Registry.CHUNK_GENERATOR, new Identifier("imggen:imggen"), ImgGenChunkGenerator.CODEC);
+        Registry.register(Registry.BIOME_SOURCE, new Identifier("imggen:imggen"), ImgGenBiomeSource.CODEC);
+
     }
 }

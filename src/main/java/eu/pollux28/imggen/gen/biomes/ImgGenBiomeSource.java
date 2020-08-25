@@ -3,6 +3,9 @@ package eu.pollux28.imggen.gen.biomes;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import eu.pollux28.imggen.ImgGen;
+import eu.pollux28.imggen.config.ImgGenConfig;
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3i;
@@ -81,8 +84,16 @@ public class ImgGenBiomeSource extends BiomeSource {
     }
 
     private void loadBiomes(){
-        Stream.of(BiomesC.values()).parallel().forEach(biomesC -> biomesRefColors.putIfAbsent(biomesC.getRGB(),biomesC.getBiome()));
-        ImgGen.config.aList.parallelStream().forEach(biomeIDAndRGBPair -> {
+        Stream.of(BiomesC.values()).forEach(biomesC -> {
+
+        });
+        for(int i =0;i<BiomesC.values().length;i++){
+            BiomesC biomesC = BiomesC.values()[i];
+            biomesRefColors.putIfAbsent(biomesC.getRGB(),biomesC.getBiome());
+            ImgGen.logger.log(Level.INFO,"register");
+        }
+        for (int i =0;i<ImgGen.config.aList.size();i++){
+            ImgGenConfig.BiomeIDAndRGBPair biomeIDAndRGBPair = ImgGen.config.aList.get(i);
             Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
             if (biomeIDAndRGBPair.RGB==-1){
                 ImgGen.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
@@ -108,16 +119,45 @@ public class ImgGenBiomeSource extends BiomeSource {
             }else{
                 ImgGen.logger.log(Level.ERROR,"Incorrect biomeID format. Expected modid:biomeid, got "+ biomeIDAndRGBPair.biomeID);
             }
-        });
+        }
+
+
+        /*ImgGen.config.aList.forEach(biomeIDAndRGBPair -> {
+            Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
+            if (biomeIDAndRGBPair.RGB==-1){
+                ImgGen.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
+                        "0xRRGGBB using hexadecimal code.");
+                return;
+            }
+            if(bID!=null){
+                Biome biome = getBiomebyID(bID);
+                if(biome!=null){
+                    Biome b2 =biomesRefColors.merge(biomeIDAndRGBPair.RGB,biome,(v1, v2) ->{
+                        ImgGen.logger.log(Level.ERROR,"Color code with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+
+                                "already exists !, Please choose a different Color Code for biome "+biomeIDAndRGBPair.biomeID);
+                        return v1;
+                    });
+                    if (b2 == biome){
+                        ImgGen.logger.log(Level.INFO,"Biome "+biomeIDAndRGBPair.biomeID + " registered with color code: "+biomeIDAndRGBPair.RGB);
+                    }
+                }else{
+                    if(!biomeIDAndRGBPair.biomeID.equals("modid:biomeid")){
+                        ImgGen.logger.log(Level.ERROR, "Couldn't find biome at "+biomeIDAndRGBPair.biomeID);
+                    }
+                }
+            }else{
+                ImgGen.logger.log(Level.ERROR,"Incorrect biomeID format. Expected modid:biomeid, got "+ biomeIDAndRGBPair.biomeID);
+            }
+        });*/
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     private void generateCache() {
         if(image==null) return;
-        for(int ix = 0; ix< sizeX *scale; ix++){
-            for(int iz = 0; iz< sizeZ *scale; iz++){
+        for(int ix = 0; ix< sizeX; ix++){
+            for(int iz = 0; iz< sizeZ; iz++){
                 int RGB = image.getRGB(ix, iz)&0xFFFFFF;
-                Vec3i vec = new Vec3i(ix-sizeX, 0, iz-sizeZ);
+                Vec3i vec = new Vec3i(ix-sizeX/2, 0, iz-sizeZ/2);
 
                 if(!this.colorsForBiome.containsKey(RGB)){
                     Biome biome = biomesRefColors.int2ObjectEntrySet().parallelStream().min(Comparator.comparingDouble(
@@ -147,7 +187,7 @@ public class ImgGenBiomeSource extends BiomeSource {
         //public Boolean equals(final Biome b) { return b == this.b; }
     }
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    public Biome getBiomeFromCache(int x, int z){
+    /*public Biome getBiomeFromCache(int x, int z){
         if(!imgSet)
             return defaultBiome;
 
@@ -177,6 +217,50 @@ public class ImgGenBiomeSource extends BiomeSource {
             }
         }
         return biomesArround.parallelStream().max(Comparator.comparingInt((bci) -> bci.count)).get().biome();
+    }*/
+    public Biome getBiomeFromCache(int x, int z){
+        if(!imgSet)
+            return defaultBiome;
+
+        //x & z are xBlock/4 & zBlock/4
+        // => 1/16 of a chunk
+        int scale = 2;
+        int xBase = x/scale;
+        int zBase = z/scale;
+
+        Biome currentBiome = BiomePosCache.getOrDefault(new Vec3i(xBase, 0, zBase), defaultBiome);
+        Set<BiomeCount> biomesArround = new HashSet<BiomeCount>();
+
+        for(int iz = -2; iz<= 2; iz++) {
+            for(int ix = -2; ix<= 2; ix++) {
+                Biome b;
+                if(iz == 0 && ix == 0)
+                    b = currentBiome;
+                else
+                    b = BiomePosCache.getOrDefault(new Vec3i(xBase+ix/scale, 0, zBase+iz/scale), currentBiome);
+                BiomeCount bc = new BiomeCount(b);
+                if(!biomesArround.contains(bc)) {
+                    biomesArround.add(bc);
+                }
+                else {
+                    for(BiomeCount bci : biomesArround) {
+                        if(bci.biome() == b) {
+                            bci.count++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        int bestBiomeCount = 0;
+        for(BiomeCount b : biomesArround) {
+            if(bestBiomeCount < b.count) {
+                bestBiomeCount = b.count;
+                currentBiome = b.biome();
+            }
+        }
+
+        return currentBiome;
     }
 
     public BufferedImage setImage(String pathname){

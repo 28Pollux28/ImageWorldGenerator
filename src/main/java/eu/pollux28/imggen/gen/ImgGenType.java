@@ -5,6 +5,7 @@ import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import net.minecraft.client.world.GeneratorType;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.ChunkGeneratorType;
+import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
 
 public class ImgGenType extends GeneratorType {
     public ImgGenType(String translationKey){
@@ -14,7 +15,7 @@ public class ImgGenType extends GeneratorType {
 
     @Override
     protected ChunkGenerator method_29076(long l) {
-        return new ImgGenChunkGenerator(new ImgGenBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType());
+        return new SurfaceChunkGenerator(new ImgGenBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType());
     }
 
 }

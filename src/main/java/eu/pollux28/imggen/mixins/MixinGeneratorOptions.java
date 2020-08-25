@@ -10,6 +10,7 @@ import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.chunk.ChunkGeneratorType;
+import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -46,7 +47,7 @@ public class MixinGeneratorOptions {
 
             String generate_structures = (String)properties.get("generate-structures");
             boolean generateStructures = generate_structures == null || Boolean.parseBoolean(generate_structures);
-            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensions, new ImgGenChunkGenerator(new ImgGenBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType()))));
+            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensions, new SurfaceChunkGenerator(new ImgGenBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType()))));
         }
     }
 }

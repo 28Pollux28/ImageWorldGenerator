@@ -73,9 +73,12 @@ publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
+			artifact(jar) {
 				builtBy remapJar
 			}
+			/*artifact("${project.buildDir.absolutePath}/libs/${archivesBaseName}-${project.version}.jar"){
+				buildBy remapJar
+			}*/
 			artifact(sourcesJar) {
 				builtBy remapSourcesJar
 			}
