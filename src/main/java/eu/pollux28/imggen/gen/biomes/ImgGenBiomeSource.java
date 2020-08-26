@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.ImgGenConfig;
-import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3i;
@@ -23,7 +21,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class ImgGenBiomeSource extends BiomeSource {
 
@@ -53,8 +50,8 @@ public class ImgGenBiomeSource extends BiomeSource {
     private final Int2ObjectOpenHashMap<Biome> biomesRefColors = new Int2ObjectOpenHashMap<>();
 
     private final Int2ObjectOpenHashMap<Biome> colorsForBiome = new Int2ObjectOpenHashMap<>();
-    private final Biome defaultBiome = Biomes.OCEAN;
-    private int scale;
+    private Biome defaultBiome;
+    private double scale;
 
 
     public ImgGenBiomeSource(long seed) {
@@ -62,8 +59,10 @@ public class ImgGenBiomeSource extends BiomeSource {
         this.seed=seed;
         this.image = setImage(ImgGen.config.imageName);
         if(this.image!=null) {
-            //EdoraMain.log(Level.FATAL, "Could not find image at "+" ! Generating a stub world.");
             this.imgSet = true;
+            sizeX=image.getWidth();
+            sizeZ=image.getHeight();
+            getDefaultBiome();
             loadBiomes();
             generateCache();
         }
@@ -83,17 +82,26 @@ public class ImgGenBiomeSource extends BiomeSource {
         return new ImgGenBiomeSource(seed);
     }
 
-    private void loadBiomes(){
-        Stream.of(BiomesC.values()).forEach(biomesC -> {
+    private void getDefaultBiome(){
+        Identifier bID = getIdFromString(ImgGen.config.defaultBiome);
+        if(bID!=null){
+            Biome biome = getBiomeByID(bID);
+            if (biome !=null){
+                defaultBiome= biome;
+            }else{
+                defaultBiome= Biomes.OCEAN;
+            }
+        }else{
+            defaultBiome= Biomes.OCEAN;
+        }
+    }
 
-        });
+    private void loadBiomes(){
         for(int i =0;i<BiomesC.values().length;i++){
             BiomesC biomesC = BiomesC.values()[i];
             biomesRefColors.putIfAbsent(biomesC.getRGB(),biomesC.getBiome());
-            ImgGen.logger.log(Level.INFO,"register");
         }
-        for (int i =0;i<ImgGen.config.aList.size();i++){
-            ImgGenConfig.BiomeIDAndRGBPair biomeIDAndRGBPair = ImgGen.config.aList.get(i);
+        for (ImgGenConfig.BiomeIDAndRGBPair biomeIDAndRGBPair :ImgGen.config.biomeList){
             Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
             if (biomeIDAndRGBPair.RGB==-1){
                 ImgGen.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
@@ -101,7 +109,7 @@ public class ImgGenBiomeSource extends BiomeSource {
                 return;
             }
             if(bID!=null){
-                Biome biome = getBiomebyID(bID);
+                Biome biome = getBiomeByID(bID);
                 if(biome!=null){
                     Biome b2 =biomesRefColors.merge(biomeIDAndRGBPair.RGB,biome,(v1, v2) ->{
                         ImgGen.logger.log(Level.ERROR,"Color code with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+
@@ -120,45 +128,15 @@ public class ImgGenBiomeSource extends BiomeSource {
                 ImgGen.logger.log(Level.ERROR,"Incorrect biomeID format. Expected modid:biomeid, got "+ biomeIDAndRGBPair.biomeID);
             }
         }
-
-
-        /*ImgGen.config.aList.forEach(biomeIDAndRGBPair -> {
-            Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
-            if (biomeIDAndRGBPair.RGB==-1){
-                ImgGen.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
-                        "0xRRGGBB using hexadecimal code.");
-                return;
-            }
-            if(bID!=null){
-                Biome biome = getBiomebyID(bID);
-                if(biome!=null){
-                    Biome b2 =biomesRefColors.merge(biomeIDAndRGBPair.RGB,biome,(v1, v2) ->{
-                        ImgGen.logger.log(Level.ERROR,"Color code with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+
-                                "already exists !, Please choose a different Color Code for biome "+biomeIDAndRGBPair.biomeID);
-                        return v1;
-                    });
-                    if (b2 == biome){
-                        ImgGen.logger.log(Level.INFO,"Biome "+biomeIDAndRGBPair.biomeID + " registered with color code: "+biomeIDAndRGBPair.RGB);
-                    }
-                }else{
-                    if(!biomeIDAndRGBPair.biomeID.equals("modid:biomeid")){
-                        ImgGen.logger.log(Level.ERROR, "Couldn't find biome at "+biomeIDAndRGBPair.biomeID);
-                    }
-                }
-            }else{
-                ImgGen.logger.log(Level.ERROR,"Incorrect biomeID format. Expected modid:biomeid, got "+ biomeIDAndRGBPair.biomeID);
-            }
-        });*/
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     private void generateCache() {
-        if(image==null) return;
-        for(int ix = 0; ix< sizeX; ix++){
+       if(image==null) return;
+       for(int ix = 0; ix< sizeX; ix++){
             for(int iz = 0; iz< sizeZ; iz++){
                 int RGB = image.getRGB(ix, iz)&0xFFFFFF;
                 Vec3i vec = new Vec3i(ix-sizeX/2, 0, iz-sizeZ/2);
-
                 if(!this.colorsForBiome.containsKey(RGB)){
                     Biome biome = biomesRefColors.int2ObjectEntrySet().parallelStream().min(Comparator.comparingDouble(
                             (bt1) -> getColorDiff(RGB, bt1.getIntKey()))).get().getValue();
@@ -167,13 +145,11 @@ public class ImgGenBiomeSource extends BiomeSource {
                 this.BiomePosCache.put(vec,this.colorsForBiome.get(RGB));
             }
         }
-
         colorsForBiome.clear();
     }
 
     private static double getColorDiff(int RGB, int btRGB){
         return Math.pow(((RGB)%256)-((btRGB)%256), 2) + Math.pow(((RGB>>8)%256)-((btRGB>>8)%256), 2) + Math.pow(((RGB>>16)%256)-((btRGB>>16)%256), 2);
-
     }
 
     private static class BiomeCount {
@@ -184,17 +160,24 @@ public class ImgGenBiomeSource extends BiomeSource {
             this.b = b;
             count = 0;
         }
-        //public Boolean equals(final Biome b) { return b == this.b; }
     }
+
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    /*public Biome getBiomeFromCache(int x, int z){
+    public Biome getBiomeFromCache(int x, int z){
         if(!imgSet)
             return defaultBiome;
-
-        //x & z are xBlock/4 & zBlock/4
-        // => 1/16 of a chunk
-        int xBase = x/scale;
-        int zBase = z/scale;
+        int xBase;
+        int zBase;
+        if(scale==2 || scale==4){
+        xBase = x <<(int)(2-scale/2);
+        zBase = z <<(int)(2-scale/2);
+        }else if((1/scale)%2==0){
+            xBase = x<<(2+(int)((1/scale)/2));
+            zBase = z<<(2+(int)((1/scale)/2));
+        }else{
+            xBase=x<<2;
+            zBase=z<<2;
+        }
 
         Biome currentBiome = BiomePosCache.getOrDefault(new Vec3i(xBase, 0, zBase), defaultBiome);
         Set<BiomeCount> biomesArround = new HashSet<>();
@@ -205,7 +188,7 @@ public class ImgGenBiomeSource extends BiomeSource {
                 if(iz == 0 && ix == 0)
                     b = currentBiome;
                 else
-                    b = BiomePosCache.getOrDefault(new Vec3i((xBase+ix)/scale, 0, (zBase+iz)/scale), currentBiome);
+                    b = BiomePosCache.getOrDefault(new Vec3i((xBase+ix), 0, (zBase+iz)), currentBiome);
                 BiomeCount bc = new BiomeCount(b);
                 if(!biomesArround.add(bc)) {
                     biomesArround.parallelStream().forEach(bci -> {
@@ -217,57 +200,12 @@ public class ImgGenBiomeSource extends BiomeSource {
             }
         }
         return biomesArround.parallelStream().max(Comparator.comparingInt((bci) -> bci.count)).get().biome();
-    }*/
-    public Biome getBiomeFromCache(int x, int z){
-        if(!imgSet)
-            return defaultBiome;
-
-        //x & z are xBlock/4 & zBlock/4
-        // => 1/16 of a chunk
-        int scale = 2;
-        int xBase = x/scale;
-        int zBase = z/scale;
-
-        Biome currentBiome = BiomePosCache.getOrDefault(new Vec3i(xBase, 0, zBase), defaultBiome);
-        Set<BiomeCount> biomesArround = new HashSet<BiomeCount>();
-
-        for(int iz = -2; iz<= 2; iz++) {
-            for(int ix = -2; ix<= 2; ix++) {
-                Biome b;
-                if(iz == 0 && ix == 0)
-                    b = currentBiome;
-                else
-                    b = BiomePosCache.getOrDefault(new Vec3i(xBase+ix/scale, 0, zBase+iz/scale), currentBiome);
-                BiomeCount bc = new BiomeCount(b);
-                if(!biomesArround.contains(bc)) {
-                    biomesArround.add(bc);
-                }
-                else {
-                    for(BiomeCount bci : biomesArround) {
-                        if(bci.biome() == b) {
-                            bci.count++;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        int bestBiomeCount = 0;
-        for(BiomeCount b : biomesArround) {
-            if(bestBiomeCount < b.count) {
-                bestBiomeCount = b.count;
-                currentBiome = b.biome();
-            }
-        }
-
-        return currentBiome;
     }
 
     public BufferedImage setImage(String pathname){
         BufferedImage img = null;
         try {
             Path configDir = Paths.get("", "imggen", "image", pathname);
-            //available: map_1.png, Edora_island.png
             img = ImageIO.read(configDir.toFile());
 
         } catch (IOException e) {
@@ -276,24 +214,24 @@ public class ImgGenBiomeSource extends BiomeSource {
         }
         if (img!=null){
             scale = ImgGen.config.scale;
-            if(scale>0) {
-                BufferedImage newImg = new BufferedImage((img.getWidth()) * scale, img.getHeight() * scale, BufferedImage.TRANSLUCENT);
+            if(scale>0 && scale !=1 && scale!=2 && scale !=4 && (1/scale)%2!=0) {
+                BufferedImage newImg = new BufferedImage((int)Math.ceil((img.getWidth()) * scale), (int)Math.ceil(img.getHeight() * scale), BufferedImage.TRANSLUCENT);
                 Graphics2D g2 = newImg.createGraphics();
                 g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 
 
-                g2.drawImage(img, 0, 0, img.getWidth() * scale, img.getHeight() * scale, null);
+                g2.drawImage(img, 0, 0, (int)Math.ceil(img.getWidth() * scale), (int)Math.ceil(img.getHeight() * scale), null);
                 g2.dispose();
-                sizeX = newImg.getWidth();
-                sizeZ = newImg.getHeight();
                 return newImg;
+            }else if (scale ==1 || scale==2 || scale ==4 || (1/scale)%2==0){
+                return img;
             }else ImgGen.logger.log(Level.ERROR,"Scale must be > 0, got : "+scale);
         }
         return img;
     }
-    public Biome getBiomebyID(Identifier biomeID){
+    public Biome getBiomeByID(Identifier biomeID){
         return Registry.BIOME.get(biomeID);
     }
     private Identifier getIdFromString(String biomeID) {
@@ -309,13 +247,13 @@ public class ImgGenBiomeSource extends BiomeSource {
         //default biomes
         Ocean(0x000070, Biomes.OCEAN),
         Plains(0x8DB360, Biomes.PLAINS),
-        Desert(0xFA947C, Biomes.DESERT),
+        Desert(0xFA9418, Biomes.DESERT),
         Mountains(0x606060, Biomes.MOUNTAINS),
         Forest(0x056621, Biomes.FOREST),
-        Taiga(0x0B0259,Biomes.TAIGA),
-        Swamp(0x07F9B3, Biomes.SWAMP),
+        Taiga(0x0B6659,Biomes.TAIGA),
+        Swamp(0x07F9B2, Biomes.SWAMP),
         River(0x0000FF,Biomes.RIVER),
-        Nether_Wastes(0xFF0000,Biomes.NETHER_WASTES),
+        Nether_Wastes(0xbf3b3b,Biomes.NETHER_WASTES),
         The_End(0x8080FF,Biomes.THE_END),
         Frozen_Ocean(0x7070D6,Biomes.FROZEN_OCEAN),
         Frozen_River(0xA0A0FF,Biomes.FROZEN_RIVER),
@@ -330,22 +268,22 @@ public class ImgGenBiomeSource extends BiomeSource {
         Mountain_Edge(0x72789A,Biomes.MOUNTAIN_EDGE),
         Jungle(0x537B09,Biomes.JUNGLE),
         Jungle_Hills(0x2C4205,Biomes.JUNGLE_HILLS),
-        Jungle_Edge(0x628817,Biomes.JUNGLE_EDGE),
+        Jungle_Edge(0x628B17,Biomes.JUNGLE_EDGE),
         Deep_Ocean(0x000030,Biomes.OCEAN),
         Stone_Shore(0xA2A284,Biomes.STONE_SHORE),
         Snowy_Beach(0xFAF0C0,Biomes.SNOWY_BEACH),
         Birch_Forest(0x307444,Biomes.BIRCH_FOREST),
-        Birch_Forest_Hills(0x1F0532,Biomes.BIRCH_FOREST_HILLS),
+        Birch_Forest_Hills(0x1F5F32,Biomes.BIRCH_FOREST_HILLS),
         Dark_Forest(0x40511A,Biomes.DARK_FOREST),
         Snowy_Taiga(0x31554A,Biomes.SNOWY_TAIGA),
         Snowy_Taiga_Hills(0x243F36,Biomes.SNOWY_TAIGA_HILLS),
         Giant_Tree_Taiga(0x596651,Biomes.GIANT_TREE_TAIGA),
-        Giant_Tree_Taiga_Hills(0x45073E,Biomes.GIANT_TREE_TAIGA_HILLS),
+        Giant_Tree_Taiga_Hills(0x454F3E,Biomes.GIANT_TREE_TAIGA_HILLS),
         Wooded_Mountains(0x507050,Biomes.WOODED_MOUNTAINS),
-        Savanna(0xBD125F, Biomes.SAVANNA),
+        Savanna(0xBDB25F, Biomes.SAVANNA),
         Savanna_Plateau(0xA79D64, Biomes.SAVANNA_PLATEAU),
         Badlands(0xD94515,Biomes.BADLANDS),
-        Wooded_Badlands_Plateau(0x119765,Biomes.WOODED_BADLANDS_PLATEAU),
+        Wooded_Badlands_Plateau(0xb09765,Biomes.WOODED_BADLANDS_PLATEAU),
         Badlands_Plateau(0xCA8C65,Biomes.BADLANDS_PLATEAU),
         Small_End_Island(0x8080FF,Biomes.SMALL_END_ISLANDS),
         End_Midlands(0x8080FF,Biomes.END_MIDLANDS),
@@ -359,22 +297,22 @@ public class ImgGenBiomeSource extends BiomeSource {
         Deep_Cold_Ocean(0x202038,Biomes.DEEP_COLD_OCEAN),
         Deep_Frozen_Ocean(0x404090, Biomes.DEEP_FROZEN_OCEAN),
         The_Void(0x000000,Biomes.THE_END),
-        Sunflower_Plains(0xB5D888,Biomes.SUNFLOWER_PLAINS),
+        Sunflower_Plains(0xB5DB88,Biomes.SUNFLOWER_PLAINS),
         Desert_Lakes(0xFFBC40,Biomes.DESERT_LAKES),
         Gravelly_Mountains(0x888888,Biomes.GRAVELLY_MOUNTAINS),
         Flower_Forest(0x2D8E49,Biomes.FLOWER_FOREST),
-        Taiga_Mountains(0x338E13,Biomes.TAIGA_MOUNTAINS),
-        Swamp_Hills(0x2FFF12,Biomes.SWAMP_HILLS),
-        Ice_Spikes(0xB414DC, Biomes.ICE_SPIKES),
-        Modified_Jungle(0x7B0D31,Biomes.MODIFIED_JUNGLE),
+        Taiga_Mountains(0x338E81,Biomes.TAIGA_MOUNTAINS),
+        Swamp_Hills(0x2FFFDA,Biomes.SWAMP_HILLS),
+        Ice_Spikes(0xB4DCDC, Biomes.ICE_SPIKES),
+        Modified_Jungle(0x7Ba331,Biomes.MODIFIED_JUNGLE),
         Modified_Jungle_Edge(0x8AB33F,Biomes.MODIFIED_JUNGLE_EDGE),
         Tall_Birch_Forest(0x589C6C,Biomes.TALL_BIRCH_FOREST),
-        Tall_Birch_Hills(0x470F5A,Biomes.TALL_BIRCH_HILLS),
-        Dark_Forest_Hills(0x68794,Biomes.DARK_FOREST_HILLS),
+        Tall_Birch_Hills(0x47875A,Biomes.TALL_BIRCH_HILLS),
+        Dark_Forest_Hills(0x687942,Biomes.DARK_FOREST_HILLS),
         Snowy_Taiga_Mountains(0x597D72,Biomes.SNOWY_TAIGA_MOUNTAINS),
         Giant_Spruce_Taiga(0x818E79,Biomes.GIANT_TREE_TAIGA),
         Giant_Spruce_Taiga_Hills(0x6D7766,Biomes.GIANT_TREE_TAIGA_HILLS),
-        Modified_Gravelly_Mountains(0x783478,Biomes.MODIFIED_GRAVELLY_MOUNTAINS),
+        Modified_Gravelly_Mountains(0x789878,Biomes.MODIFIED_GRAVELLY_MOUNTAINS),
         Shattered_Savanna(0xE5DA87,Biomes.SHATTERED_SAVANNA),
         Shattered_Savanna_Plateau(0xCFC58C,Biomes.SHATTERED_SAVANNA_PLATEAU),
         Eroded_Badlands(0xFF6D3D,Biomes.ERODED_BADLANDS),
@@ -382,7 +320,7 @@ public class ImgGenBiomeSource extends BiomeSource {
         Modified_Badlands_Plateau(0xF2B48D,Biomes.MODIFIED_BADLANDS_PLATEAU),
         Bamboo_Jungle(0x768E14,Biomes.BAMBOO_JUNGLE),
         Bamboo_Jungle_Hills(0x3B470A,Biomes.BAMBOO_JUNGLE_HILLS),
-        Soul_Sand_Valley(0x522921,Biomes.SOUL_SAND_VALLEY),
+        Soul_Sand_Valley(0x5e3830,Biomes.SOUL_SAND_VALLEY),
         Crimson_Forest(0xDD0808,Biomes.CRIMSON_FOREST),
         Warped_Forest(0x49907B,Biomes.WARPED_FOREST),
         Basalt_Deltas(0x403636,Biomes.BASALT_DELTAS);

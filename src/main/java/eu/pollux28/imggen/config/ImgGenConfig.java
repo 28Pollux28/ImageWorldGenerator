@@ -10,14 +10,15 @@ import java.util.List;
 @Config(name = "imggen")
 public class ImgGenConfig implements ConfigData {
     public String imageName = "defaultImage.jpg";
-    public int scale = 1;
-
+    public double scale = 1.0;
+    public String defaultBiome="minecraft:ocean";
+    public float lakeFormationPercent = 0.5f;
 
 
 
     @ConfigEntry.Gui.Excluded
     @ConfigEntry.Gui.PrefixText()
-    public List<BiomeIDAndRGBPair> aList = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
+    public List<BiomeIDAndRGBPair> biomeList = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
 
     public static class BiomeIDAndRGBPair {
 

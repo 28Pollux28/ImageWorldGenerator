@@ -1,5 +1,9 @@
 {
-    "generator.genmap" : "GenMap",
-    "text.autoconfig.genmap.title": "GenMap Config",
-    "text.autoconfig.genmap.option.test": "Test"
+    "generator.imggen" : "Image Generator",
+    "text.autoconfig.imggen.title": "Image World Generator Config",
+    "text.autoconfig.imggen.option.imagename": "Fichier de l'image",
+    "text.autoconfig.imggen.option.scale": "Echelle du monde",
+    "text.autoconfig.imggen.option.defaultBiome":"Default Biome",
+    "text.autoconfig.imggen.option.lakeFormationPercent":"Lake Formation Percent",
+    "text.autoconfig.imggen.option.biomeList.@PrefixText": "Pour ajouter des biomes personnalisés, merci de se rendre sur le fichier imggen.json"
 }

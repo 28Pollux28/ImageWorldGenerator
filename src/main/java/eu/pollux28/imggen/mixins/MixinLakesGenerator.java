@@ -1,5 +1,6 @@
 package eu.pollux28.imggen.mixins;
 
+import eu.pollux28.imggen.ImgGen;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.gen.StructureAccessor;
@@ -17,7 +18,7 @@ import java.util.Random;
 public class MixinLakesGenerator {
     @Inject(method = "generate", at = @At("HEAD"),cancellable = true)
     private void injectLessLakes(ServerWorldAccess serverWorldAccess, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, Random random, BlockPos blockPos, SingleStateFeatureConfig singleStateFeatureConfig, CallbackInfoReturnable<Boolean> cir){
-        if (random.nextFloat() <0.5f){
+        if (random.nextFloat() < ImgGen.config.lakeFormationPercent){
             cir.setReturnValue(false);
         }
     }
