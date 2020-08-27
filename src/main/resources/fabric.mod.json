@@ -43,9 +43,6 @@
   "entrypoints": {
     "main": [
       "eu.pollux28.imggen.ImgGen"
-    ],
-    "modmenu": [
-      "eu.pollux28.imggen.client.ImgGenModMenuImpl"
     ]
   },
   "environment": "*",

@@ -18,7 +18,7 @@ import java.util.Random;
 public class MixinLakesGenerator {
     @Inject(method = "generate", at = @At("HEAD"),cancellable = true)
     private void injectLessLakes(ServerWorldAccess serverWorldAccess, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, Random random, BlockPos blockPos, SingleStateFeatureConfig singleStateFeatureConfig, CallbackInfoReturnable<Boolean> cir){
-        if (random.nextFloat() < ImgGen.config.lakeFormationPercent){
+        if (random.nextFloat() < ImgGen.CONFIG.lakeFormationPercentChance){
             cir.setReturnValue(false);
         }
     }

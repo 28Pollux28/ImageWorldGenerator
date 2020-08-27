@@ -3,7 +3,9 @@ package eu.pollux28.imggen.gen.biomes;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import eu.pollux28.imggen.ImgGen;
-import eu.pollux28.imggen.config.ImgGenConfig;
+import eu.pollux28.imggen.config.ConfigUtil;
+import eu.pollux28.imggen.config.MainConfigData;
+import eu.pollux28.imggen.util.BiomeIDAndRGBPair;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3i;
@@ -56,8 +58,9 @@ public class ImgGenBiomeSource extends BiomeSource {
 
     public ImgGenBiomeSource(long seed) {
         super(biomes);
+        ImgGen.CONFIG=ConfigUtil.getFromConfig(MainConfigData.class,Paths.get("", "config", "imggen.json"));
         this.seed=seed;
-        this.image = setImage(ImgGen.config.imageName);
+        this.image = setImage(ImgGen.CONFIG.imageName);
         getDefaultBiome();
         if(this.image!=null) {
             this.imgSet = true;
@@ -83,7 +86,7 @@ public class ImgGenBiomeSource extends BiomeSource {
     }
 
     private void getDefaultBiome(){
-        Identifier bID = getIdFromString(ImgGen.config.defaultBiome);
+        Identifier bID = getIdFromString(ImgGen.CONFIG.defaultBiome);
         if(bID!=null){
             Biome biome = getBiomeByID(bID);
             if (biome !=null){
@@ -101,19 +104,26 @@ public class ImgGenBiomeSource extends BiomeSource {
             BiomesC biomesC = BiomesC.values()[i];
             biomesRefColors.putIfAbsent(biomesC.getRGB(),biomesC.getBiome());
         }
-        for (ImgGenConfig.BiomeIDAndRGBPair biomeIDAndRGBPair :ImgGen.config.biomeList){
-            Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
-            if (biomeIDAndRGBPair.RGB==-1){
+        for (BiomeIDAndRGBPair biomeIDAndRGBPair :ImgGen.CONFIG.customBiomes){
+            int RGB;
+            try {
+              RGB = Integer.decode(biomeIDAndRGBPair.RGB);
+            }catch (NumberFormatException e){
+               RGB = -1;
+            }
+            if (RGB==-1){
                 ImgGen.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
                         "0xRRGGBB using hexadecimal code.");
                 return;
             }
+            Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
             if(bID!=null){
                 Biome biome = getBiomeByID(bID);
                 if(biome!=null){
-                    Biome b2 =biomesRefColors.merge(biomeIDAndRGBPair.RGB,biome,(v1, v2) ->{
-                        ImgGen.logger.log(Level.ERROR,"Color code with key "+Integer.toHexString(biomeIDAndRGBPair.RGB)+
-                                "already exists !, Please choose a different Color Code for biome "+biomeIDAndRGBPair.biomeID);
+                    int finalRGB = RGB;
+                    Biome b2 =biomesRefColors.merge(RGB,biome,(v1, v2) ->{
+                        ImgGen.logger.log(Level.ERROR,"Color code with key "+Integer.toHexString(finalRGB)+
+                                " already exists !, Please choose a different Color Code for biome "+biomeIDAndRGBPair.biomeID);
                         return v1;
                     });
                     if (b2 == biome){
@@ -213,7 +223,7 @@ public class ImgGenBiomeSource extends BiomeSource {
             ImgGen.logger.log(Level.ERROR,"Couldn't find image at /imggen/image/"+pathname);
         }
         if (img!=null){
-            scale = ImgGen.config.scale;
+            scale = ImgGen.CONFIG.scale;
             if(scale>0 && scale !=1 && scale!=2 && scale !=4 && (1/scale)%2!=0) {
                 BufferedImage newImg = new BufferedImage((int)Math.ceil((img.getWidth()) * scale), (int)Math.ceil(img.getHeight() * scale), BufferedImage.TRANSLUCENT);
                 Graphics2D g2 = newImg.createGraphics();
