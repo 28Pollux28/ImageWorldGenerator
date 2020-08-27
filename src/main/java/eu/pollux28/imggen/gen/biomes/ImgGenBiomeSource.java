@@ -58,11 +58,11 @@ public class ImgGenBiomeSource extends BiomeSource {
         super(biomes);
         this.seed=seed;
         this.image = setImage(ImgGen.config.imageName);
+        getDefaultBiome();
         if(this.image!=null) {
             this.imgSet = true;
             sizeX=image.getWidth();
             sizeZ=image.getHeight();
-            getDefaultBiome();
             loadBiomes();
             generateCache();
         }
