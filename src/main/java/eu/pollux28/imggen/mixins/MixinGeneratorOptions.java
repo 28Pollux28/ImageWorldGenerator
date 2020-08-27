@@ -3,6 +3,7 @@ package eu.pollux28.imggen.mixins;
 //Code used from Simplex Terrain <https://github.com/SuperCoder7979/simplexterrain>, with permission from SuperCoder79
 
 import com.google.common.base.MoreObjects;
+import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import net.minecraft.util.registry.SimpleRegistry;
@@ -47,7 +48,8 @@ public class MixinGeneratorOptions {
 
             String generate_structures = (String)properties.get("generate-structures");
             boolean generateStructures = generate_structures == null || Boolean.parseBoolean(generate_structures);
-            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensions, new SurfaceChunkGenerator(new ImgGenBiomeSource(l), l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType()))));
+            ImgGen.biomeSource= new ImgGenBiomeSource(l);
+            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensions, new SurfaceChunkGenerator(ImgGen.biomeSource, l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType()))));
         }
     }
 }

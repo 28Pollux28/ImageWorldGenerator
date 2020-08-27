@@ -3,6 +3,7 @@ package eu.pollux28.imggen.gen.biomes;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import eu.pollux28.imggen.ImgGen;
+import eu.pollux28.imggen.config.Config;
 import eu.pollux28.imggen.config.ConfigUtil;
 import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.util.BiomeIDAndRGBPair;
@@ -48,19 +49,22 @@ public class ImgGenBiomeSource extends BiomeSource {
     private final BufferedImage image;
     private boolean imgSet = false;
     private int sizeX, sizeZ;
-    private final HashMap<Vec3i, Biome> BiomePosCache = new HashMap<>();
+    private final HashMap<Vec3i, Biome> BiomePosCache = new HashMap<>(sizeX*sizeZ,1.0f);
     private final Int2ObjectOpenHashMap<Biome> biomesRefColors = new Int2ObjectOpenHashMap<>();
 
     private final Int2ObjectOpenHashMap<Biome> colorsForBiome = new Int2ObjectOpenHashMap<>();
     private Biome defaultBiome;
     private double scale;
+    public MainConfigData config;
 
 
     public ImgGenBiomeSource(long seed) {
         super(biomes);
-        ImgGen.CONFIG=ConfigUtil.getFromConfig(MainConfigData.class,Paths.get("", "config", "imggen.json"));
+        ImgGen.refreshConfig();
+        config = ImgGen.CONFIG;
+        //Config.init();
         this.seed=seed;
-        this.image = setImage(ImgGen.CONFIG.imageName);
+        this.image = setImage(config.imageName);
         getDefaultBiome();
         if(this.image!=null) {
             this.imgSet = true;

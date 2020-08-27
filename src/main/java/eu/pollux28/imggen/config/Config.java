@@ -15,7 +15,6 @@ public class Config {
     public static void init() {
         MainConfigData configData = null;
         try {
-
             Path configDir = Paths.get("", "config", "imggen.json");
             if (Files.exists(configDir)) {
                 configData = ConfigUtil.gson.fromJson(new FileReader(configDir.toFile()), MainConfigData.class);
@@ -28,7 +27,6 @@ public class Config {
                 }
             } else {
                 configData = new MainConfigData();
-                SecurityManager sec;
                 Paths.get("", "config").toFile().mkdirs();
                 BufferedWriter writer = new BufferedWriter(new FileWriter(configDir.toFile()));
                 writer.write(ConfigUtil.gson.toJson(configData));

@@ -1,6 +1,7 @@
 package eu.pollux28.imggen;
 
 import eu.pollux28.imggen.config.Config;
+import eu.pollux28.imggen.config.ConfigUtil;
 import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.gen.ImgGenType;
 import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
@@ -23,6 +24,7 @@ public class ImgGen implements ModInitializer {
     public static Logger logger = LogManager.getLogger();
     public static ImgGenType levelGeneratorType;
     public static MainConfigData CONFIG;
+    public static ImgGenBiomeSource biomeSource= null;
 
 
     @Override
@@ -39,5 +41,9 @@ public class ImgGen implements ModInitializer {
         Registry.register(Registry.CHUNK_GENERATOR, new Identifier("imggen:imggen"), ImgGenChunkGenerator.CODEC);
         Registry.register(Registry.BIOME_SOURCE, new Identifier("imggen:imggen"), ImgGenBiomeSource.CODEC);
 
+
+    }
+    public static void refreshConfig(){
+        ImgGen.CONFIG= ConfigUtil.getFromConfig(MainConfigData.class,Paths.get("", "config", "imggen.json"));
     }
 }
