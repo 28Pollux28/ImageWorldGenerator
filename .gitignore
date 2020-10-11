@@ -1,5 +1,6 @@
 # gradle
-
+BUSources1.16.1/
+remappedSrc/
 .gradle/
 build/
 out/
@@ -28,3 +29,4 @@ bin/
 
 run/
 runS/
+/remappedSrc/

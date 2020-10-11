@@ -4,9 +4,11 @@ import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import net.minecraft.client.world.GeneratorType;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.ChunkGeneratorType;
-import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
+import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
+import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
 
 public class ImgGenType extends GeneratorType {
     public ImgGenType(String translationKey){
@@ -15,12 +17,11 @@ public class ImgGenType extends GeneratorType {
     }
 
     @Override
-    protected ChunkGenerator method_29076(long l) {
-        //ImgGen.refreshConfig();
-
-        ImgGen.biomeSource = new ImgGenBiomeSource(l);
-        return new SurfaceChunkGenerator(ImgGen.biomeSource, l, ChunkGeneratorType.Preset.OVERWORLD.getChunkGeneratorType());
+    protected ChunkGenerator getChunkGenerator(Registry<Biome> biomeRegistry, Registry<ChunkGeneratorSettings> chunkGeneratorSettingsRegistry, long seed) {
+        ImgGen.biomeSource = new ImgGenBiomeSource(seed, biomeRegistry);
+        return new NoiseChunkGenerator(ImgGen.biomeSource, seed, () -> chunkGeneratorSettingsRegistry.get(ChunkGeneratorSettings.OVERWORLD));
     }
+
 
 }
 

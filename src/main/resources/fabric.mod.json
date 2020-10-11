@@ -37,7 +37,7 @@
   "depends": {
     "fabricloader": ">=0.7.4",
     "fabric": "*",
-    "minecraft": "1.16.1"
+    "minecraft": "1.16.3"
   },
   "description": "Minecraft Mod to generate a world from an image !",
   "entrypoints": {
@@ -57,5 +57,5 @@
   "suggests": {
     "flamingo": "*"
   },
-  "version": "1.0.0"
+  "version": "0.1.3"
 }
