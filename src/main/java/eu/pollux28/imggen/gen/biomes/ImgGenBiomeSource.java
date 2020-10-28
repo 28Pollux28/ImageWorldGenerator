@@ -69,11 +69,7 @@ public class ImgGenBiomeSource extends BiomeSource {
 
 
     public ImgGenBiomeSource(long seed, Registry<Biome> biomeRegistry) {
-        super(BIOMES.stream().map((registryKey) -> {
-            return () -> {
-                return (Biome)biomeRegistry.getOrThrow(registryKey);
-            };
-        }));
+        super(BIOMES.stream().map((registryKey) -> () -> (Biome)biomeRegistry.getOrThrow(registryKey)));
         ImgGen.refreshConfig();
         config = ImgGen.CONFIG;
         //Config.init();
@@ -298,7 +294,7 @@ public class ImgGenBiomeSource extends BiomeSource {
         Jungle(0x537B09,BiomeKeys.JUNGLE),
         Jungle_Hills(0x2C4205,BiomeKeys.JUNGLE_HILLS),
         Jungle_Edge(0x628B17,BiomeKeys.JUNGLE_EDGE),
-        Deep_Ocean(0x000030,BiomeKeys.OCEAN),
+        Deep_Ocean(0x000030,BiomeKeys.DEEP_OCEAN),
         Stone_Shore(0xA2A284,BiomeKeys.STONE_SHORE),
         Snowy_Beach(0xFAF0C0,BiomeKeys.SNOWY_BEACH),
         Birch_Forest(0x307444,BiomeKeys.BIRCH_FOREST),
