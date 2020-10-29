@@ -9,7 +9,7 @@ import java.util.Objects;
 
 public class MainConfigData {
     public String configVersion = ImgGen.VERSION;
-    public String imageName="defaultImage.jpg";
+    public String imageName="defaultImage.png";
     public double scale = 1.0;
     public String defaultBiome="minecraft:ocean";
 

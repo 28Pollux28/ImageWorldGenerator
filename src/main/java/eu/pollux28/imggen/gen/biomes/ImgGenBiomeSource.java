@@ -2,7 +2,6 @@ package eu.pollux28.imggen.gen.biomes;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.MainConfigData;
@@ -16,7 +15,6 @@ import net.minecraft.util.registry.RegistryLookupCodec;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
 import org.apache.logging.log4j.Level;
 
 import javax.imageio.ImageIO;
@@ -25,19 +23,12 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class ImgGenBiomeSource extends BiomeSource {
 
-    //public static final Codec<ImgGenBiomeSource> CODEC = Codec.LONG.fieldOf("seed").stable().forGetter( (source) -> source.;
-    public static final Codec<ImgGenBiomeSource> CODEC = RecordCodecBuilder.create((instance) -> {
-        return instance.group(Codec.LONG.fieldOf("seed").stable().forGetter((imgGenBiomeSource) -> {
-            return imgGenBiomeSource.seed;
-        }), RegistryLookupCodec.of(Registry.BIOME_KEY).forGetter((imgGenBiomeSource) -> {
-            return imgGenBiomeSource.biomeRegistry;
-        })).apply(instance, instance.stable(ImgGenBiomeSource::new));
-    });
+    public static final Codec<ImgGenBiomeSource> CODEC = RecordCodecBuilder.create((instance) -> instance.group(Codec.LONG.fieldOf("seed").stable().forGetter((imgGenBiomeSource) -> imgGenBiomeSource.seed), RegistryLookupCodec.of(Registry.BIOME_KEY).forGetter((imgGenBiomeSource) -> imgGenBiomeSource.biomeRegistry)).apply(instance, instance.stable(ImgGenBiomeSource::new)));
     private static final List<RegistryKey<Biome>> BIOMES = ImmutableList.of(BiomeKeys.OCEAN, BiomeKeys.PLAINS, BiomeKeys.DESERT, BiomeKeys.MOUNTAINS,
             BiomeKeys.FOREST, BiomeKeys.TAIGA, BiomeKeys.SWAMP, BiomeKeys.RIVER, BiomeKeys.SNOWY_TUNDRA,
             BiomeKeys.SNOWY_MOUNTAINS, BiomeKeys.MUSHROOM_FIELDS, BiomeKeys.MUSHROOM_FIELD_SHORE, BiomeKeys.BEACH, BiomeKeys.DESERT_HILLS, BiomeKeys.WOODED_HILLS,
@@ -52,13 +43,12 @@ public class ImgGenBiomeSource extends BiomeSource {
             BiomeKeys.GIANT_SPRUCE_TAIGA, BiomeKeys.GIANT_SPRUCE_TAIGA_HILLS, BiomeKeys.MODIFIED_GRAVELLY_MOUNTAINS,
             BiomeKeys.SHATTERED_SAVANNA, BiomeKeys.SHATTERED_SAVANNA_PLATEAU, BiomeKeys.ERODED_BADLANDS,
             BiomeKeys.MODIFIED_WOODED_BADLANDS_PLATEAU, BiomeKeys.MODIFIED_BADLANDS_PLATEAU, BiomeKeys.THE_VOID,BiomeKeys.BASALT_DELTAS);
-    //private static final List<Biome> biomes = ImmutableList.copyOf(Biome);
 
     private final long seed;
     private final BufferedImage image;
     private boolean imgSet = false;
     private int sizeX, sizeZ;
-    private final HashMap<Vec3i, Biome> BiomePosCache = new HashMap<>(sizeX*sizeZ,1.0f);
+    private final HashMap<Vec3i, Biome> BiomePosCache = new HashMap<>();
     private final Int2ObjectOpenHashMap<Biome> biomesRefColors = new Int2ObjectOpenHashMap<>();
 
     private final Int2ObjectOpenHashMap<Biome> colorsForBiome = new Int2ObjectOpenHashMap<>();
@@ -72,7 +62,6 @@ public class ImgGenBiomeSource extends BiomeSource {
         super(BIOMES.stream().map((registryKey) -> () -> (Biome)biomeRegistry.getOrThrow(registryKey)));
         ImgGen.refreshConfig();
         config = ImgGen.CONFIG;
-        //Config.init();
         this.seed=seed;
         this.biomeRegistry=biomeRegistry;
         this.image = setImage(config.imageName);
@@ -205,7 +194,7 @@ public class ImgGenBiomeSource extends BiomeSource {
         }
 
         Biome currentBiome = BiomePosCache.getOrDefault(new Vec3i(xBase, 0, zBase), defaultBiome);
-        Set<BiomeCount> biomesArround = new HashSet<>();
+        Set<BiomeCount> biomesAround = new HashSet<>();
 
         for(int iz = -2; iz<= 2; iz++) {
             for(int ix = -2; ix<= 2; ix++) {
@@ -215,8 +204,8 @@ public class ImgGenBiomeSource extends BiomeSource {
                 else
                     b = BiomePosCache.getOrDefault(new Vec3i((xBase+ix), 0, (zBase+iz)), currentBiome);
                 BiomeCount bc = new BiomeCount(b);
-                if(!biomesArround.add(bc)) {
-                    biomesArround.parallelStream().forEach(bci -> {
+                if(!biomesAround.add(bc)) {
+                    biomesAround.parallelStream().forEach(bci -> {
                         if (bci.biome()==b){
                             bci.count++;
                         }
@@ -224,7 +213,7 @@ public class ImgGenBiomeSource extends BiomeSource {
                 }
             }
         }
-        return biomesArround.parallelStream().max(Comparator.comparingInt((bci) -> bci.count)).get().biome();
+        return biomesAround.parallelStream().max(Comparator.comparingInt((bci) -> bci.count)).get().biome();
     }
 
     public BufferedImage setImage(String pathname){
@@ -265,9 +254,6 @@ public class ImgGenBiomeSource extends BiomeSource {
             return null;
         }else return new Identifier(str[0],str[1]);
     }
-    /*public Identifier getBiomeId(Biome biome) {
-        return Registry.BIOME.getId(biome);
-    }*/
     public enum BiomesC{
         //default biomes
         Ocean(0x000070, BiomeKeys.OCEAN),
