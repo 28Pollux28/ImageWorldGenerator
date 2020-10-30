@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 
 
 public class ImgGen implements ModInitializer {
-    public static final String VERSION ="0.1.3.2";
+    public static final String VERSION ="0.1.3.3";
     public static Logger logger = LogManager.getLogger();
     public static ImgGenType levelGeneratorType;
     public static MainConfigData CONFIG;

@@ -231,7 +231,7 @@ public class ImgGenBiomeSource extends BiomeSource {
             if(scale>0 && scale !=1 && scale!=2 && scale !=4 && (1/scale)%2!=0) {
                 BufferedImage newImg = new BufferedImage((int)Math.ceil((img.getWidth()) * scale), (int)Math.ceil(img.getHeight() * scale), BufferedImage.TRANSLUCENT);
                 Graphics2D g2 = newImg.createGraphics();
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 
@@ -255,7 +255,6 @@ public class ImgGenBiomeSource extends BiomeSource {
         }else return new Identifier(str[0],str[1]);
     }
     public enum BiomesC{
-        //default biomes
         Ocean(0x000070, BiomeKeys.OCEAN),
         Plains(0x8DB360, BiomeKeys.PLAINS),
         Desert(0xFA9418, BiomeKeys.DESERT),

@@ -15,7 +15,6 @@ public class MainConfigData {
 
     public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
     public float lakeFormationPercentChance = 0.5f;
-    //public boolean reloadConfig= false;
 
     @Override
     public boolean equals(Object o) {

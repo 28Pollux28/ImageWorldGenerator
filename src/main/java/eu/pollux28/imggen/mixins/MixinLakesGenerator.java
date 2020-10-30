@@ -15,16 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Random;
 
-/*@Mixin(LakeFeature.class)
-public class MixinLakesGenerator {
-    @Inject(method = "generate", at = @At("HEAD"),cancellable = true)
-    private void injectLessLakes(ServerWorldAccess serverWorldAccess, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, Random random, BlockPos blockPos, SingleStateFeatureConfig singleStateFeatureConfig, CallbackInfoReturnable<Boolean> cir){
-        if (random.nextFloat() < ImgGen.CONFIG.lakeFormationPercentChance){
-            cir.setReturnValue(false);
-        }
-    }
-}*/
-
 @Mixin(LakeFeature.class)
 public class MixinLakesGenerator {
     @Inject(method = "generate", at = @At("HEAD"),cancellable = true)

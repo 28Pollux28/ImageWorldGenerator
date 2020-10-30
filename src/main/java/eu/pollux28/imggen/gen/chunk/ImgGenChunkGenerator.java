@@ -2,7 +2,6 @@ package eu.pollux28.imggen.gen.chunk;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
@@ -20,9 +19,7 @@ import net.minecraft.util.math.*;
 import net.minecraft.util.math.noise.*;
 import net.minecraft.world.*;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.SpawnSettings;
-import net.minecraft.world.biome.source.BiomeArray;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.biome.source.TheEndBiomeSource;
 import net.minecraft.world.chunk.Chunk;
@@ -113,9 +110,6 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         }
     }
 
-	/*public static void registerChunkGenerator() {
-		Registry.register(Registry.CHUNK_GENERATOR, EdoraMain.MOD_FULL_ID, ImgGenChunkGenerator.CODEC);
-	}*/
 
     public static final Codec<ImgGenChunkGenerator> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
             BiomeSource.CODEC.fieldOf("biome_source").forGetter((generator) -> generator.biomeSource),
@@ -134,11 +128,6 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     public ChunkGenerator withSeed(long seed) {
         return new ImgGenChunkGenerator(this.biomeSource.withSeed(seed),seed, this.settings);
     }
-    /*@Override
-    public int getSeaLevel() {
-
-        return 62;
-    }*/
     @Override
     public void buildSurface(ChunkRegion chunkRegion, Chunk chunk) {
         ChunkPos chunkPos = chunk.getPos();
@@ -324,7 +313,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                     float p = biome.getScale();
                     float s;
                     float t;
-                    if ((noiseConfig.isAmplified()||biome.equals(BiomeKeys.SHATTERED_SAVANNA)) && o > 0.0F) {
+                    if ((noiseConfig.isAmplified()/*||biomeSource.getBiomes().*/) && o > 0.0F) {
                         s = 1.0F + o * 2.0F;
                         t = 1.0F + p * 4.0F;
                     } else {
