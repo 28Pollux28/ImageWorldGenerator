@@ -7,4 +7,8 @@ public class BiomeIDAndRGBPair {
         this.biomeID = biomeID;
         this.RGB = RGB;
     }
+
+    public String getRGB() {
+        return RGB;
+    }
 }

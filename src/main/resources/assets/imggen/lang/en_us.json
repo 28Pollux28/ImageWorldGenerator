@@ -1,9 +1,3 @@
 {
-    "generator.imggen" : "Image Generator",
-    "text.autoconfig.imggen.title": "Image World Generator Config",
-    "text.autoconfig.imggen.option.imagename": "Image file",
-    "text.autoconfig.imggen.option.scale": "Scale of the world",
-    "text.autoconfig.imggen.option.defaultBiome":"Default Biome",
-    "text.autoconfig.imggen.option.lakeFormationPercent":"Lake Formation Percent",
-    "text.autoconfig.imggen.option.biomeList.@PrefixText": "To add custom biomes, go to the imggen.json file"
+    "generator.imggen" : "Image Generator"
 }

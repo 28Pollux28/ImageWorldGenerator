@@ -2,7 +2,6 @@ package eu.pollux28.imggen.gen.chunk;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
@@ -20,8 +19,7 @@ import net.minecraft.util.math.*;
 import net.minecraft.util.math.noise.*;
 import net.minecraft.world.*;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.Biomes;
-import net.minecraft.world.biome.source.BiomeArray;
+import net.minecraft.world.biome.SpawnSettings;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.biome.source.TheEndBiomeSource;
 import net.minecraft.world.chunk.Chunk;
@@ -36,12 +34,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class ImgGenChunkGenerator extends ChunkGenerator{
     private final long seed;
     private final BiomeSource biomeSource;
-    protected final ChunkGeneratorType chunkGeneratorType;
+    protected final ChunkGeneratorSettings chunkGeneratorType;
     //CopyPaste from vanilla :
     private static final float[] field_16649 = (float[]) Util.make(new float[13824], (array) -> {
         for(int i = 0; i < 24; ++i) {
@@ -78,13 +77,15 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     protected final BlockState defaultBlock;
     protected final BlockState defaultFluid;
     private final int field_24779;
+    protected final Supplier<ChunkGeneratorSettings> settings;
 
-    public ImgGenChunkGenerator(BiomeSource biomeSource, long seed, ChunkGeneratorType chunkGeneratorType) {
+    public ImgGenChunkGenerator(BiomeSource biomeSource, long worldSeed, Supplier<ChunkGeneratorSettings> supplier) {
         super(biomeSource, new StructuresConfig(true));
         this.biomeSource=biomeSource;
-        this.chunkGeneratorType=chunkGeneratorType;
-        this.seed = seed;
-        NoiseConfig noiseConfig = chunkGeneratorType.method_28559();
+        this.settings=supplier;
+        this.chunkGeneratorType= supplier.get();
+        this.seed = worldSeed;
+        GenerationShapeConfig noiseConfig = chunkGeneratorType.getGenerationShapeConfig();
         this.field_24779 = noiseConfig.getHeight();
         this.verticalNoiseResolution = noiseConfig.getSizeVertical() * 4;
         this.horizontalNoiseResolution = noiseConfig.getSizeHorizontal() * 4;
@@ -109,32 +110,24 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         }
     }
 
-	/*public static void registerChunkGenerator() {
-		Registry.register(Registry.CHUNK_GENERATOR, EdoraMain.MOD_FULL_ID, ImgGenChunkGenerator.CODEC);
-	}*/
 
     public static final Codec<ImgGenChunkGenerator> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
-            BiomeSource.field_24713.fieldOf("biome_source").forGetter((generator) -> generator.biomeSource),
+            BiomeSource.CODEC.fieldOf("biome_source").forGetter((generator) -> generator.biomeSource),
             Codec.LONG.fieldOf("seed").stable().forGetter((generator) -> generator.seed),
-            ChunkGeneratorType.field_24781.fieldOf("settings").forGetter((surfaceChunkGenerator) -> {
-                return surfaceChunkGenerator.chunkGeneratorType;
+            ChunkGeneratorSettings.REGISTRY_CODEC.fieldOf("settings").forGetter((surfaceChunkGenerator) -> {
+                return surfaceChunkGenerator.settings;
             }))
             .apply(instance, instance.stable(ImgGenChunkGenerator::new)));
 
     @Override
-    protected Codec<? extends ChunkGenerator> method_28506() {
+    protected Codec<? extends ChunkGenerator> getCodec() {
         return CODEC;
     }
 
     @Environment(EnvType.CLIENT)
     public ChunkGenerator withSeed(long seed) {
-        return new ImgGenChunkGenerator(new ImgGenBiomeSource(seed), seed,this.chunkGeneratorType);
+        return new ImgGenChunkGenerator(this.biomeSource.withSeed(seed),seed, this.settings);
     }
-    /*@Override
-    public int getSeaLevel() {
-
-        return 62;
-    }*/
     @Override
     public void buildSurface(ChunkRegion chunkRegion, Chunk chunk) {
         ChunkPos chunkPos = chunk.getPos();
@@ -216,11 +209,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
 	}*/
 
 
-    @Override
+    /*@Override
     public void populateBiomes(Chunk chunk) {
         ChunkPos chunkPos = chunk.getPos();
         ((ProtoChunk)chunk).setBiomes(new BiomeArray(chunkPos, this.biomeSource));
-    }
+    }*/
 	/*@Override
 	public int getHeight(int x, int z, Type heightmapType) {
 		return getHeight(x, z);
@@ -293,7 +286,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     private void sampleNoiseColumn(double[] buffer, int x, int z) {
-        NoiseConfig noiseConfig = this.chunkGeneratorType.method_28559();
+        GenerationShapeConfig noiseConfig = this.chunkGeneratorType.getGenerationShapeConfig();
         double ac;
         double ad;
         double ai;
@@ -320,7 +313,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                     float p = biome.getScale();
                     float s;
                     float t;
-                    if ((noiseConfig.isAmplified()||biome.equals(Biomes.SHATTERED_SAVANNA)) && o > 0.0F) {
+                    if ((noiseConfig.isAmplified()/*||biomeSource.getBiomes().*/) && o > 0.0F) {
                         s = 1.0F + o * 2.0F;
                         t = 1.0F + p * 4.0F;
                     } else {
@@ -467,7 +460,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         int j = chunkPos.z;
         int k = i << 4;
         int l = j << 4;
-        Iterator var11 = StructureFeature.field_24861.iterator();
+        Iterator var11 = StructureFeature.JIGSAW_STRUCTURES.iterator();
 
         while(var11.hasNext()) {
             StructureFeature<?> structureFeature = (StructureFeature)var11.next();
@@ -652,11 +645,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     public int getSeaLevel() {
-        return this.chunkGeneratorType.method_28561();
+        return this.chunkGeneratorType.getSeaLevel();
     }
 
-    public List<Biome.SpawnEntry> getEntitySpawnList(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos) {
-        if (accessor.method_28388(pos, true, StructureFeature.SWAMP_HUT).hasChildren()) {
+    public List<SpawnSettings.SpawnEntry> getEntitySpawnList(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos) {
+        if (accessor.getStructureAt(pos, true, StructureFeature.SWAMP_HUT).hasChildren()) {
             if (group == SpawnGroup.MONSTER) {
                 return StructureFeature.SWAMP_HUT.getMonsterSpawns();
             }
@@ -667,15 +660,15 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         }
 
         if (group == SpawnGroup.MONSTER) {
-            if (accessor.method_28388(pos, false, StructureFeature.PILLAGER_OUTPOST).hasChildren()) {
+            if (accessor.getStructureAt(pos, false, StructureFeature.PILLAGER_OUTPOST).hasChildren()) {
                 return StructureFeature.PILLAGER_OUTPOST.getMonsterSpawns();
             }
 
-            if (accessor.method_28388(pos, false, StructureFeature.MONUMENT).hasChildren()) {
+            if (accessor.getStructureAt(pos, false, StructureFeature.MONUMENT).hasChildren()) {
                 return StructureFeature.MONUMENT.getMonsterSpawns();
             }
 
-            if (accessor.method_28388(pos, true, StructureFeature.FORTRESS).hasChildren()) {
+            if (accessor.getStructureAt(pos, true, StructureFeature.FORTRESS).hasChildren()) {
                 return StructureFeature.FORTRESS.getMonsterSpawns();
             }
         }
@@ -687,7 +680,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         if (!false) {
             int i = region.getCenterChunkX();
             int j = region.getCenterChunkZ();
-            Biome biome = region.getBiome((new ChunkPos(i, j)).getCenterBlockPos());
+            Biome biome = region.getBiome((new ChunkPos(i, j)).getStartPos());
             ChunkRandom chunkRandom = new ChunkRandom();
             chunkRandom.setPopulationSeed(region.getSeed(), i << 4, j << 4);
             SpawnHelper.populateEntities(region, biome, i, j, chunkRandom);

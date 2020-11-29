@@ -50,41 +50,13 @@ public class ConfigUtil {
 
                 //update to newest config using le epic reflection hacks
                 String version = (String) config.getClass().getField("configVersion").get(config);
-                //boolean reload = (Boolean) config.getClass().getField("reloadConfig").get(config);
                 if (!version.equals(ImgGen.VERSION)) {
                     config.getClass().getField("configVersion").set(config, ImgGen.VERSION);
                     BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()));
                     writer.write(ConfigUtil.gson.toJson(config));
                     writer.close();
                 }
-                /*if (reload){
-                    MainConfigData data = new MainConfigData();
-                    Field[] fields = data.getClass().getFields();
-                    List<Field> fieldL =Arrays.asList(fields);
-                    List<Field>fieldL2 = Arrays.asList(config.getClass().getFields());
-                    for(Field f : List.copyOf(fieldL2)){
-                        if(fieldL.size()==0){
-                            break;
-                        }
-                        for(Field f2 : fieldL){
-                            if (f.getName().equals(f2.getName())){
-                                fieldL.remove(f2);
-                                fieldL2.remove(f);
-                                break;
-                            }
-                        }
-                    }
-                    if(fieldL2.size()!=0){
-                        for (Field f:fieldL2){
-                            f.set(config,data.getClass().getField(f.getName()).get(config));
-                        }
-                        BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()));
-                        writer.write(ConfigUtil.gson.toJson(config));
-                        writer.close();
-                    }
-                    config = ConfigUtil.gson.fromJson(new FileReader(path.toFile()), configClass);
-                    return config;
-                }*/
+
             } else {
                 //config does not exist: write value
                 BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()));

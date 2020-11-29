@@ -10,7 +10,7 @@
 
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/image-world-generator",
     "sources": "https://github.com/28Pollux28/ImageWorldGenerator",
     "issues": "https://github.com/28Pollux28/ImageWorldGenerator/issues"
   },
@@ -37,7 +37,7 @@
   "depends": {
     "fabricloader": ">=0.7.4",
     "fabric": "*",
-    "minecraft": "1.16.1"
+    "minecraft": ">=1.16.3"
   },
   "description": "Minecraft Mod to generate a world from an image !",
   "entrypoints": {
@@ -57,5 +57,5 @@
   "suggests": {
     "flamingo": "*"
   },
-  "version": "1.0.0"
+  "version": "0.1.3.4"
 }
