@@ -7,6 +7,7 @@ import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.util.BiomeIDAndRGBPair;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
@@ -25,6 +26,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
+
+import static net.minecraft.util.math.MathHelper.square;
 
 public class ImgGenBiomeSource extends BiomeSource {
 
@@ -45,10 +48,10 @@ public class ImgGenBiomeSource extends BiomeSource {
             BiomeKeys.MODIFIED_WOODED_BADLANDS_PLATEAU, BiomeKeys.MODIFIED_BADLANDS_PLATEAU, BiomeKeys.THE_VOID,BiomeKeys.BASALT_DELTAS);
 
     private final long seed;
-    private final BufferedImage image;
+    private BufferedImage image;
     private boolean imgSet = false;
     private int sizeX, sizeZ;
-    private final HashMap<Vec3i, Biome> BiomePosCache = new HashMap<>();
+    private final Object2ObjectOpenHashMap<Vec3i, Biome> BiomePosCache = new Object2ObjectOpenHashMap<>();
     private final Int2ObjectOpenHashMap<Biome> biomesRefColors = new Int2ObjectOpenHashMap<>();
 
     private final Int2ObjectOpenHashMap<Biome> colorsForBiome = new Int2ObjectOpenHashMap<>();
@@ -72,6 +75,7 @@ public class ImgGenBiomeSource extends BiomeSource {
             sizeZ=image.getHeight();
             loadBiomes();
             generateCache();
+            dumpImage();
         }
     }
     @Override
@@ -118,7 +122,7 @@ public class ImgGenBiomeSource extends BiomeSource {
             if (RGB==-1){
                 ImgGen.logger.log(Level.ERROR,"Biome "+biomeIDAndRGBPair.biomeID+" has incorrect color code. Must be in the form of : " +
                         "0xRRGGBB using hexadecimal code.");
-                return;
+                continue;
             }
             Identifier bID = getIdFromString(biomeIDAndRGBPair.biomeID);
             if(bID!=null){
@@ -146,13 +150,13 @@ public class ImgGenBiomeSource extends BiomeSource {
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     private void generateCache() {
-        if(image==null) return;
+        if(!imgSet) return;
         for(int ix = 0; ix< sizeX; ix++){
             for(int iz = 0; iz< sizeZ; iz++){
                 int RGB = image.getRGB(ix, iz)&0xFFFFFF;
                 Vec3i vec = new Vec3i(ix-sizeX/2, 0, iz-sizeZ/2);
                 if(!this.colorsForBiome.containsKey(RGB)){
-                    Biome biome = biomesRefColors.int2ObjectEntrySet().parallelStream().min(Comparator.comparingDouble(
+                    Biome biome = biomesRefColors.int2ObjectEntrySet().stream().sequential().min(Comparator.comparingDouble(
                             (bt1) -> getColorDiff(RGB, bt1.getIntKey()))).get().getValue();
                     this.colorsForBiome.put(RGB, biome);
                 }
@@ -163,10 +167,10 @@ public class ImgGenBiomeSource extends BiomeSource {
     }
 
     private static double getColorDiff(int RGB, int btRGB){
-        return Math.pow(((RGB)%256)-((btRGB)%256), 2) + Math.pow(((RGB>>8)%256)-((btRGB>>8)%256), 2) + Math.pow(((RGB>>16)%256)-((btRGB>>16)%256), 2);
+        return square(((RGB)%256)-((btRGB)%256)) + square(((RGB>>8)%256)-((btRGB>>8)%256)) + square(((RGB>>16)%256)-((btRGB>>16)%256));
     }
 
-    private static class BiomeCount {
+    /*private static class BiomeCount {
         private final Biome b;
         public int count;
         public final Biome biome() { return b; }
@@ -174,12 +178,10 @@ public class ImgGenBiomeSource extends BiomeSource {
             this.b = b;
             count = 0;
         }
-    }
+    }*/
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     public Biome getBiomeFromCache(int x, int z){
-        if(!imgSet)
-            return defaultBiome;
+        if(!imgSet) return defaultBiome;
         int xBase;
         int zBase;
         if(scale==2 || scale==4){
@@ -193,8 +195,8 @@ public class ImgGenBiomeSource extends BiomeSource {
             zBase=z<<2;
         }
 
-        Biome currentBiome = BiomePosCache.getOrDefault(new Vec3i(xBase, 0, zBase), defaultBiome);
-        Set<BiomeCount> biomesAround = new HashSet<>();
+        return BiomePosCache.getOrDefault(new Vec3i(xBase, 0, zBase), defaultBiome);
+        /*Set<BiomeCount> biomesAround = new HashSet<>();
 
         for(int iz = -2; iz<= 2; iz++) {
             for(int ix = -2; ix<= 2; ix++) {
@@ -213,7 +215,7 @@ public class ImgGenBiomeSource extends BiomeSource {
                 }
             }
         }
-        return biomesAround.parallelStream().max(Comparator.comparingInt((bci) -> bci.count)).get().biome();
+        return biomesAround.parallelStream().max(Comparator.comparingInt((bci) -> bci.count)).get().biome();*/
     }
 
     public BufferedImage setImage(String pathname){
@@ -245,6 +247,10 @@ public class ImgGenBiomeSource extends BiomeSource {
         }
         return img;
     }
+    private void dumpImage(){
+        this.image = null;
+    }
+
     public Biome getBiomeByID(Identifier biomeID){
         return biomeRegistry.get(biomeID);
     }
