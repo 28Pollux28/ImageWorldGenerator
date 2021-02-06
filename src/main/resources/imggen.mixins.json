@@ -5,7 +5,11 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "MixinGeneratorOptions",
-    "MixinLakesGenerator"
+    "MixinLakesGenerator",
+    "MixinAbstractPiglinEntity",
+    "MixinAbstractPiglinEntityInvoker",
+    "MixinHoglinEntity",
+    "MixinHoglinEntityInvoker"
   ],
   "injectors": {
     "defaultRequire": 1
