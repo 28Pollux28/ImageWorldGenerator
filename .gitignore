@@ -5,6 +5,7 @@ remappedSrc/
 build/
 out/
 classes/
+deps/
 
 # eclipse
 

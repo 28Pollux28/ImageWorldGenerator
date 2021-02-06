@@ -2,6 +2,8 @@ package eu.pollux28.imggen.gen.chunk;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import eu.pollux28.imggen.ImgGen;
+import eu.pollux28.imggen.gen.structures.StructuresSource;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
@@ -10,13 +12,19 @@ import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.SpawnGroup;
-import net.minecraft.structure.JigsawJunction;
-import net.minecraft.structure.PoolStructurePiece;
-import net.minecraft.structure.StructurePiece;
+import net.minecraft.server.network.DebugInfoSender;
+import net.minecraft.structure.*;
 import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.util.Util;
+import net.minecraft.util.crash.CrashException;
+import net.minecraft.util.crash.CrashReport;
+import net.minecraft.util.crash.CrashReportSection;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.noise.*;
+import net.minecraft.util.registry.DynamicRegistryManager;
+import net.minecraft.util.registry.MutableRegistry;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.*;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.SpawnSettings;
@@ -28,6 +36,9 @@ import net.minecraft.world.chunk.ProtoChunk;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.*;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeatures;
+import net.minecraft.world.gen.feature.FeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 
 import java.util.Iterator;
@@ -38,21 +49,18 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class ImgGenChunkGenerator extends ChunkGenerator{
-    private final long seed;
-    private final BiomeSource biomeSource;
-    protected final ChunkGeneratorSettings chunkGeneratorType;
-    //CopyPaste from vanilla :
-    private static final float[] field_16649 = (float[]) Util.make(new float[13824], (array) -> {
+    public static final Codec<ImgGenChunkGenerator> CODEC = RecordCodecBuilder.create((instance) -> instance.group(BiomeSource.CODEC.fieldOf("biome_source").forGetter((ImgGenChunkGenerator) -> ImgGenChunkGenerator.biomeSource), Codec.LONG.fieldOf("seed").stable().forGetter((ImgGenChunkGenerator) -> ImgGenChunkGenerator.worldSeed), ChunkGeneratorSettings.REGISTRY_CODEC.fieldOf("settings").forGetter((ImgGenChunkGenerator) -> ImgGenChunkGenerator.settings)).apply(instance, instance.stable(ImgGenChunkGenerator::new)));
+    private static final float[] NOISE_WEIGHT_TABLE = Util.make(new float[13824], (array) -> {
         for(int i = 0; i < 24; ++i) {
             for(int j = 0; j < 24; ++j) {
                 for(int k = 0; k < 24; ++k) {
-                    array[i * 24 * 24 + j * 24 + k] = (float)method_16571(j - 12, k - 12, i - 12);
+                    array[i * 24 * 24 + j * 24 + k] = (float)calculateNoiseWeight(j - 12, k - 12, i - 12);
                 }
             }
         }
 
     });
-    private static final float[] field_24775 = (float[])Util.make(new float[25], (fs) -> {
+    private static final float[] BIOME_WEIGHT_TABLE = Util.make(new float[25], (fs) -> {
         for(int i = -2; i <= 2; ++i) {
             for(int j = -2; j <= 2; ++j) {
                 float f = 10.0F / MathHelper.sqrt((float)(i * i + j * j) + 0.2F);
@@ -72,52 +80,55 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     private final OctavePerlinNoiseSampler upperInterpolatedNoise;
     private final OctavePerlinNoiseSampler interpolationNoise;
     private final NoiseSampler surfaceDepthNoise;
-    private final OctavePerlinNoiseSampler field_24776;
-    private final SimplexNoiseSampler field_24777;
+    private final OctavePerlinNoiseSampler densityNoise;
+    private final SimplexNoiseSampler islandNoise;
     protected final BlockState defaultBlock;
     protected final BlockState defaultFluid;
-    private final int field_24779;
+    private final long worldSeed;
     protected final Supplier<ChunkGeneratorSettings> settings;
+    private final int worldHeight;
+    private final StructuresConfig structuresConfig;
+    private StructuresSource structuresSource = null;
 
     public ImgGenChunkGenerator(BiomeSource biomeSource, long worldSeed, Supplier<ChunkGeneratorSettings> supplier) {
-        super(biomeSource, new StructuresConfig(true));
-        this.biomeSource=biomeSource;
-        this.settings=supplier;
-        this.chunkGeneratorType= supplier.get();
-        this.seed = worldSeed;
-        GenerationShapeConfig noiseConfig = chunkGeneratorType.getGenerationShapeConfig();
-        this.field_24779 = noiseConfig.getHeight();
-        this.verticalNoiseResolution = noiseConfig.getSizeVertical() * 4;
-        this.horizontalNoiseResolution = noiseConfig.getSizeHorizontal() * 4;
-        this.defaultBlock = chunkGeneratorType.getDefaultBlock();
-        this.defaultFluid = chunkGeneratorType.getDefaultFluid();
+        this(biomeSource, biomeSource, worldSeed, supplier);
+    }
+    public ImgGenChunkGenerator(BiomeSource biomeSource, long worldSeed,Supplier<ChunkGeneratorSettings> supplier, MutableRegistry<ConfiguredStructureFeature<?,?>>configuredStructureFeatures){
+        this(biomeSource,biomeSource,worldSeed,supplier);
+    }
+    private ImgGenChunkGenerator(BiomeSource biomeSource, BiomeSource biomeSource2, long worldSeed, Supplier<ChunkGeneratorSettings> supplier) {
+        super(biomeSource, biomeSource2, supplier.get().getStructuresConfig(), worldSeed);
+        this.worldSeed = worldSeed;
+        ChunkGeneratorSettings chunkGeneratorSettings = supplier.get();
+        this.settings = supplier;
+        GenerationShapeConfig generationShapeConfig = chunkGeneratorSettings.getGenerationShapeConfig();
+        this.worldHeight = generationShapeConfig.getHeight();
+        this.verticalNoiseResolution = generationShapeConfig.getSizeVertical() * 4;
+        this.horizontalNoiseResolution = generationShapeConfig.getSizeHorizontal() * 4;
+        this.defaultBlock = chunkGeneratorSettings.getDefaultBlock();
+        this.defaultFluid = chunkGeneratorSettings.getDefaultFluid();
         this.noiseSizeX = 16 / this.horizontalNoiseResolution;
-        this.noiseSizeY = noiseConfig.getHeight() / this.verticalNoiseResolution;
+        this.noiseSizeY = generationShapeConfig.getHeight() / this.verticalNoiseResolution;
         this.noiseSizeZ = 16 / this.horizontalNoiseResolution;
-        this.random = new ChunkRandom(seed);
+        this.random = new ChunkRandom(worldSeed);
         this.lowerInterpolatedNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
         this.upperInterpolatedNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
         this.interpolationNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-7, 0));
-        this.surfaceDepthNoise = (NoiseSampler)(noiseConfig.hasSimplexSurfaceNoise() ? new OctaveSimplexNoiseSampler(this.random, IntStream.rangeClosed(-3, 0)) : new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-3, 0)));
+        this.surfaceDepthNoise = generationShapeConfig.hasSimplexSurfaceNoise() ? new OctaveSimplexNoiseSampler(this.random, IntStream.rangeClosed(-3, 0)) : new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-3, 0));
         this.random.consume(2620);
-        this.field_24776 = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
-        if (noiseConfig.hasIslandNoiseOverride()) {
-            ChunkRandom chunkRandom = new ChunkRandom(seed);
+        this.densityNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
+        if (generationShapeConfig.hasIslandNoiseOverride()) {
+            ChunkRandom chunkRandom = new ChunkRandom(worldSeed);
             chunkRandom.consume(17292);
-            this.field_24777 = new SimplexNoiseSampler(chunkRandom);
+            this.islandNoise = new SimplexNoiseSampler(chunkRandom);
         } else {
-            this.field_24777 = null;
+            this.islandNoise = null;
         }
+        this.structuresConfig = supplier.get().getStructuresConfig();
     }
 
 
-    public static final Codec<ImgGenChunkGenerator> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
-            BiomeSource.CODEC.fieldOf("biome_source").forGetter((generator) -> generator.biomeSource),
-            Codec.LONG.fieldOf("seed").stable().forGetter((generator) -> generator.seed),
-            ChunkGeneratorSettings.REGISTRY_CODEC.fieldOf("settings").forGetter((surfaceChunkGenerator) -> {
-                return surfaceChunkGenerator.settings;
-            }))
-            .apply(instance, instance.stable(ImgGenChunkGenerator::new)));
+
 
     @Override
     protected Codec<? extends ChunkGenerator> getCodec() {
@@ -128,127 +139,15 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     public ChunkGenerator withSeed(long seed) {
         return new ImgGenChunkGenerator(this.biomeSource.withSeed(seed),seed, this.settings);
     }
-    @Override
-    public void buildSurface(ChunkRegion chunkRegion, Chunk chunk) {
-        ChunkPos chunkPos = chunk.getPos();
-        int i = chunkPos.x;
-        int j = chunkPos.z;
-        ChunkRandom chunkRandom = new ChunkRandom();
-        chunkRandom.setTerrainSeed(i, j);
-        ChunkPos chunkPos2 = chunk.getPos();
-        int startX = chunkPos2.getStartX();
-        int startZ = chunkPos2.getStartZ();
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
 
-        for(int localX = 0; localX < 16; ++localX) {
-            for(int localZ = 0; localZ < 16; ++localZ) {
-                int x = startX + localX;
-                int z = startZ + localZ;
-                int height = /*getHeight(x, z);//*/chunk.sampleHeightmap(net.minecraft.world.Heightmap.Type.WORLD_SURFACE_WG, localX, localZ) + 1;
-                double noise = chunkRandom.nextDouble();
-                chunkRegion.getBiome(mutable.set(startX + localX, height, startZ + localZ)).buildSurface(chunkRandom, chunk, x, z, height, noise, Blocks.STONE.getDefaultState(), Blocks.WATER.getDefaultState(), this.getSeaLevel(), seed);
-            }
-        }
-
-        this.buildBedrock(chunk, chunkRandom);
+    public boolean method_28548(long l, RegistryKey<ChunkGeneratorSettings> registryKey) {
+        return this.worldSeed == l && this.settings.get().equals(registryKey);
     }
-    private void buildBedrock(Chunk chunk, Random random) {
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
-        int i = chunk.getPos().getStartX();
-        int j = chunk.getPos().getStartZ();
-        int k = 0; //bedrock floor y
-        int l = 0; //bedrock ceiling y
-        Iterator<BlockPos> var9 = BlockPos.iterate(i, 0, j, i + 15, 0, j + 15).iterator();
-
-        while(true) {
-            BlockPos blockPos;
-            int n;
-            do {
-                if (!var9.hasNext()) {
-                    return;
-                }
-
-                blockPos = var9.next();
-                if (l > 0) {
-                    for(n = l; n >= l - 4; --n) {
-                        if (n >= l - random.nextInt(5)) {
-                            chunk.setBlockState(mutable.set(blockPos.getX(), n, blockPos.getZ()), Blocks.BEDROCK.getDefaultState(), false);
-                        }
-                    }
-                }
-            } while(k >= 256);
-
-            for(n = k + 4; n >= k; --n) {
-                if (n <= k + random.nextInt(5)) {
-                    chunk.setBlockState(mutable.set(blockPos.getX(), n, blockPos.getZ()), Blocks.BEDROCK.getDefaultState(), false);
-                }
-            }
-        }
-    }
-	/*@Override
-	public void populateNoise(WorldAccess world, StructureAccessor accessor, Chunk chunk) {
-		BlockPos.Mutable pos = new BlockPos.Mutable();
-		for (int x = 0; x < 16; ++x) {
-			pos.setX(x);
-			chunk.getPos().toLong();
-			for (int z = 0; z < 16; ++z) {
-				pos.setZ(z);
-				int height = chunk.sampleHeightmap(net.minecraft.world.Heightmap.Type.WORLD_SURFACE_WG, x, z) + 1;//getHeight(pos.getX(), pos.getZ());
-				for (int y = 0; y <= height; ++y) {
-					pos.setY(y);
-					chunk.setBlockState(pos, Blocks.STONE.getDefaultState(), false);
-				}
-				for (int y = 0; y < getSeaLevel(); y++) {
-					pos.setY(y);
-					if (chunk.getBlockState(pos).isAir()) {
-						chunk.setBlockState(pos, Blocks.WATER.getDefaultState(), false);
-					}
-				}
-			}
-		}
-	}*/
-
-
-    /*@Override
-    public void populateBiomes(Chunk chunk) {
-        ChunkPos chunkPos = chunk.getPos();
-        ((ProtoChunk)chunk).setBiomes(new BiomeArray(chunkPos, this.biomeSource));
-    }*/
-	/*@Override
-	public int getHeight(int x, int z, Type heightmapType) {
-		return getHeight(x, z);
-	}*/
-
-	/*@Override
-	public BlockView getColumnSample(int x, int z) {
-		int height = getHeight(x, z);
-		BlockState[] array = new BlockState[256];
-		for (int y = 255; y >= 0; y--) {
-			if (y > height) {
-				if (y > getSeaLevel()) {
-					array[y] = Blocks.AIR.getDefaultState();
-				} else {
-					array[y] = Blocks.WATER.getDefaultState();
-				}
-			} else {
-				array[y] = Blocks.STONE.getDefaultState();
-			}
-		}
-
-		return new VerticalBlockSample(array);
-	}*/
-
-	/*private int getHeight(int x, int z) {
-		return 63;//BiomeSelector.getAlpha(x, z);
-	}*/
-    //CopyPasted from vanilla
-    //TODO : Figure out how this shit works :
 
     private double sampleNoise(int x, int y, int z, double horizontalScale, double verticalScale, double horizontalStretch, double verticalStretch) {
         double d = 0.0D;
         double e = 0.0D;
         double f = 0.0D;
-        boolean bl = true;
         double g = 1.0D;
 
         for(int i = 0; i < 16; ++i) {
@@ -286,13 +185,13 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     private void sampleNoiseColumn(double[] buffer, int x, int z) {
-        GenerationShapeConfig noiseConfig = this.chunkGeneratorType.getGenerationShapeConfig();
+        GenerationShapeConfig generationShapeConfig = this.settings.get().getGenerationShapeConfig();
         double ac;
         double ad;
         double ai;
         double aj;
-        if (this.field_24777 != null) {
-            ac = (double)(TheEndBiomeSource.getNoiseAt(this.field_24777, x, z) - 8.0F);
+        if (this.islandNoise != null) {
+            ac = TheEndBiomeSource.getNoiseAt(this.islandNoise, x, z) - 8.0F;
             if (ac > 0.0D) {
                 ad = 0.25D;
             } else {
@@ -302,7 +201,6 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
             float g = 0.0F;
             float h = 0.0F;
             float i = 0.0F;
-            //int j = true;
             int k = this.getSeaLevel();
             float l = this.biomeSource.getBiomeForNoiseGen(x, k, z).getDepth();
 
@@ -313,7 +211,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                     float p = biome.getScale();
                     float s;
                     float t;
-                    if ((noiseConfig.isAmplified()/*||biomeSource.getBiomes().*/) && o > 0.0F) {
+                    if (generationShapeConfig.isAmplified() && o > 0.0F) {
                         s = 1.0F + o * 2.0F;
                         t = 1.0F + p * 4.0F;
                     } else {
@@ -322,7 +220,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                     }
 
                     float u = o > l ? 0.5F : 1.0F;
-                    float v = u * field_24775[m + 2 + (n + 2) * 5] / (s + 2.0F);
+                    float v = u * BIOME_WEIGHT_TABLE[m + 2 + (n + 2) * 5] / (s + 2.0F);
                     g += t * v;
                     h += s * v;
                     i += v;
@@ -331,25 +229,25 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
 
             float w = h / i;
             float y = g / i;
-            ai = (double)(w * 0.5F - 0.125F);
-            aj = (double)(y * 0.9F + 0.1F);
+            ai = w * 0.5F - 0.125F;
+            aj = y * 0.9F + 0.1F;
             ac = ai * 0.265625D;
             ad = 96.0D / aj;
         }
 
-        double ae = 684.412D * noiseConfig.getSampling().getXZScale();
-        double af = 684.412D * noiseConfig.getSampling().getYScale();
-        double ag = ae / noiseConfig.getSampling().getXZFactor();
-        double ah = af / noiseConfig.getSampling().getYFactor();
-        ai = (double)noiseConfig.getTopSlide().getTarget();
-        aj = (double)noiseConfig.getTopSlide().getSize();
-        double ak = (double)noiseConfig.getTopSlide().getOffset();
-        double al = (double)noiseConfig.getBottomSlide().getTarget();
-        double am = (double)noiseConfig.getBottomSlide().getSize();
-        double an = (double)noiseConfig.getBottomSlide().getOffset();
-        double ao = noiseConfig.hasRandomDensityOffset() ? this.method_28553(x, z) : 0.0D;
-        double ap = noiseConfig.getDensityFactor();
-        double aq = noiseConfig.getDensityOffset();
+        double ae = 684.412D * generationShapeConfig.getSampling().getXZScale();
+        double af = 684.412D * generationShapeConfig.getSampling().getYScale();
+        double ag = ae / generationShapeConfig.getSampling().getXZFactor();
+        double ah = af / generationShapeConfig.getSampling().getYFactor();
+        ai = generationShapeConfig.getTopSlide().getTarget();
+        aj = generationShapeConfig.getTopSlide().getSize();
+        double ak = generationShapeConfig.getTopSlide().getOffset();
+        double al = generationShapeConfig.getBottomSlide().getTarget();
+        double am = generationShapeConfig.getBottomSlide().getSize();
+        double an = generationShapeConfig.getBottomSlide().getOffset();
+        double ao = generationShapeConfig.hasRandomDensityOffset() ? this.getRandomDensityAt(x, z) : 0.0D;
+        double ap = generationShapeConfig.getDensityFactor();
+        double aq = generationShapeConfig.getDensityOffset();
 
         for(int ar = 0; ar <= this.noiseSizeY; ++ar) {
             double as = this.sampleNoise(x, ar, z, ae, af, ag, ah);
@@ -378,8 +276,8 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
 
     }
 
-    private double method_28553(int i, int j) {
-        double d = this.field_24776.sample((double)(i * 200), 10.0D, (double)(j * 200), 1.0D, 0.0D, true);
+    private double getRandomDensityAt(int x, int z) {
+        double d = this.densityNoise.sample(x * 200, 10.0D, z * 200, 1.0D, 0.0D, true);
         double f;
         if (d < 0.0D) {
             f = -d * 0.3D;
@@ -392,13 +290,12 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     public int getHeight(int x, int z, Heightmap.Type heightmapType) {
-        return this.sampleHeightmap(x, z, (BlockState[])null, heightmapType.getBlockPredicate());
+        return this.sampleHeightmap(x, z, null, heightmapType.getBlockPredicate());
     }
-
 
     public BlockView getColumnSample(int x, int z) {
         BlockState[] blockStates = new BlockState[this.noiseSizeY * this.verticalNoiseResolution];
-        this.sampleHeightmap(x, z, blockStates, (Predicate)null);
+        this.sampleHeightmap(x, z, blockStates, null);
         return new VerticalBlockSample(blockStates);
     }
 
@@ -452,6 +349,78 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         return blockState3;
     }
 
+    @Override
+    public void buildSurface(ChunkRegion region, Chunk chunk) {
+        ChunkPos chunkPos = chunk.getPos();
+        int i = chunkPos.x;
+        int j = chunkPos.z;
+        ChunkRandom chunkRandom = new ChunkRandom();
+        chunkRandom.setTerrainSeed(i, j);
+        ChunkPos chunkPos2 = chunk.getPos();
+        int k = chunkPos2.getStartX();
+        int l = chunkPos2.getStartZ();
+        double d = 0.0625D;
+        BlockPos.Mutable mutable = new BlockPos.Mutable();
+
+        for(int m = 0; m < 16; ++m) {
+            for(int n = 0; n < 16; ++n) {
+                int o = k + m;
+                int p = l + n;
+                int q = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, m, n) + 1;
+                double e = this.surfaceDepthNoise.sample((double)o * 0.0625D, (double)p * 0.0625D, 0.0625D, (double)m * 0.0625D) * 15.0D;
+                Biome biome = region.getBiome(mutable.set(k + m, q, l + n));
+                BlockState blockState = this.defaultBlock;
+                BlockState blockStateF = this.defaultFluid;
+                if(biome.getCategory() == Biome.Category.NETHER){
+                    blockState = Blocks.NETHERRACK.getDefaultState();
+                    blockStateF = Blocks.LAVA.getDefaultState();
+                }
+                biome.buildSurface(chunkRandom, chunk, o, p, q, e, blockState, blockStateF, this.getSeaLevel(), region.getSeed());
+
+            }
+        }
+
+        this.buildBedrock(chunk, chunkRandom);
+    }
+    private void buildBedrock(Chunk chunk, Random random) {
+        BlockPos.Mutable mutable = new BlockPos.Mutable();
+        int i = chunk.getPos().getStartX();
+        int j = chunk.getPos().getStartZ();
+        ChunkGeneratorSettings chunkGeneratorSettings = this.settings.get();
+        int k = chunkGeneratorSettings.getBedrockFloorY();
+        int l = this.worldHeight - 1 - chunkGeneratorSettings.getBedrockCeilingY();
+        boolean bl = l + 4 >= 0 && l < this.worldHeight;
+        boolean bl2 = k + 4 >= 0 && k < this.worldHeight;
+        if (bl || bl2) {
+            Iterator var12 = BlockPos.iterate(i, 0, j, i + 15, 0, j + 15).iterator();
+
+            while(true) {
+                BlockPos blockPos;
+                int o;
+                do {
+                    if (!var12.hasNext()) {
+                        return;
+                    }
+
+                    blockPos = (BlockPos)var12.next();
+                    if (bl) {
+                        for(o = 0; o < 5; ++o) {
+                            if (o <= random.nextInt(5)) {
+                                chunk.setBlockState(mutable.set(blockPos.getX(), l - o, blockPos.getZ()), Blocks.BEDROCK.getDefaultState(), false);
+                            }
+                        }
+                    }
+                } while(!bl2);
+
+                for(o = 4; o >= 0; --o) {
+                    if (o <= random.nextInt(5)) {
+                        chunk.setBlockState(mutable.set(blockPos.getX(), k + o, blockPos.getZ()), Blocks.BEDROCK.getDefaultState(), false);
+                    }
+                }
+            }
+        }
+    }
+
     public void populateNoise(WorldAccess world, StructureAccessor accessor, Chunk chunk) {
         ObjectList<StructurePiece> objectList = new ObjectArrayList(10);
         ObjectList<JigsawJunction> objectList2 = new ObjectArrayList(32);
@@ -460,44 +429,37 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         int j = chunkPos.z;
         int k = i << 4;
         int l = j << 4;
-        Iterator var11 = StructureFeature.JIGSAW_STRUCTURES.iterator();
-
-        while(var11.hasNext()) {
-            StructureFeature<?> structureFeature = (StructureFeature)var11.next();
+        for (StructureFeature<?> feature : StructureFeature.JIGSAW_STRUCTURES) {
+            StructureFeature<?> structureFeature = feature;
             accessor.getStructuresWithChildren(ChunkSectionPos.from(chunkPos, 0), structureFeature).forEach((start) -> {
                 Iterator var6 = start.getChildren().iterator();
 
-                while(true) {
-                    while(true) {
-                        StructurePiece structurePiece;
-                        do {
-                            if (!var6.hasNext()) {
-                                return;
-                            }
-
-                            structurePiece = (StructurePiece)var6.next();
-                        } while(!structurePiece.intersectsChunk(chunkPos, 12));
-
-                        if (structurePiece instanceof PoolStructurePiece) {
-                            PoolStructurePiece poolStructurePiece = (PoolStructurePiece)structurePiece;
-                            StructurePool.Projection projection = poolStructurePiece.getPoolElement().getProjection();
-                            if (projection == StructurePool.Projection.RIGID) {
-                                objectList.add(poolStructurePiece);
-                            }
-
-                            Iterator var10 = poolStructurePiece.getJunctions().iterator();
-
-                            while(var10.hasNext()) {
-                                JigsawJunction jigsawJunction = (JigsawJunction)var10.next();
-                                int kx = jigsawJunction.getSourceX();
-                                int lx = jigsawJunction.getSourceZ();
-                                if (kx > k - 12 && lx > l - 12 && kx < k + 15 + 12 && lx < l + 15 + 12) {
-                                    objectList2.add(jigsawJunction);
-                                }
-                            }
-                        } else {
-                            objectList.add(structurePiece);
+                while (true) {
+                    StructurePiece structurePiece;
+                    do {
+                        if (!var6.hasNext()) {
+                            return;
                         }
+
+                        structurePiece = (StructurePiece) var6.next();
+                    } while (!structurePiece.intersectsChunk(chunkPos, 12));
+
+                    if (structurePiece instanceof PoolStructurePiece) {
+                        PoolStructurePiece poolStructurePiece = (PoolStructurePiece) structurePiece;
+                        StructurePool.Projection projection = poolStructurePiece.getPoolElement().getProjection();
+                        if (projection == StructurePool.Projection.RIGID) {
+                            objectList.add(poolStructurePiece);
+                        }
+
+                        for (JigsawJunction jigsawJunction : poolStructurePiece.getJunctions()) {
+                            int kx = jigsawJunction.getSourceX();
+                            int lx = jigsawJunction.getSourceZ();
+                            if (kx > k - 12 && lx > l - 12 && kx < k + 15 + 12 && lx < l + 15 + 12) {
+                                objectList2.add(jigsawJunction);
+                            }
+                        }
+                    } else {
+                        objectList.add(structurePiece);
                     }
                 }
             });
@@ -571,8 +533,8 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                 int at;
                                 int au;
                                 int ar;
-                                for(ao = ao / 2.0D - ao * ao * ao / 24.0D; objectListIterator.hasNext(); ao += method_16572(at, au, ar) * 0.8D) {
-                                    StructurePiece structurePiece = (StructurePiece)objectListIterator.next();
+                                for(ao = ao / 2.0D - ao * ao * ao / 24.0D; objectListIterator.hasNext(); ao += getNoiseWeight(at, au, ar) * 0.8D) {
+                                    StructurePiece structurePiece = objectListIterator.next();
                                     BlockBox blockBox = structurePiece.getBoundingBox();
                                     at = Math.max(0, Math.max(blockBox.minX - ae, ae - blockBox.maxX));
                                     au = v - (blockBox.minY + (structurePiece instanceof PoolStructurePiece ? ((PoolStructurePiece)structurePiece).getGroundLevelDelta() : 0));
@@ -582,11 +544,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                 objectListIterator.back(objectList.size());
 
                                 while(objectListIterator2.hasNext()) {
-                                    JigsawJunction jigsawJunction = (JigsawJunction)objectListIterator2.next();
+                                    JigsawJunction jigsawJunction = objectListIterator2.next();
                                     int as = ae - jigsawJunction.getSourceX();
                                     at = v - jigsawJunction.getSourceGroundY();
                                     au = ak - jigsawJunction.getSourceZ();
-                                    ao += method_16572(as, at, au) * 0.4D;
+                                    ao += getNoiseWeight(as, at, au) * 0.4D;
                                 }
 
                                 objectListIterator2.back(objectList2.size());
@@ -596,7 +558,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                         mutable.set(ae, v, ak);
                                         protoChunk.addLightSource(mutable);
                                     }
-
+                                    //Biome biome =world.getBiome(new BlockPos(k+af,w,l+al));
+                                    Biome biome2 = biomeSource.getBiomeForNoiseGen((k+af)>>2, w>>2,(l+al)>>2);
+                                    if(biome2.getCategory()==Biome.Category.NETHER){
+                                        blockState = Blocks.NETHERRACK.getDefaultState();
+                                    }
                                     chunkSection.setBlockState(af, w, al, blockState, false);
                                     heightmap.trackUpdate(af, v, al, blockState);
                                     heightmap2.trackUpdate(af, v, al, blockState);
@@ -616,13 +582,13 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
 
     }
 
-    private static double method_16572(int i, int j, int k) {
-        int l = i + 12;
-        int m = j + 12;
-        int n = k + 12;
-        if (l >= 0 && l < 24) {
-            if (m >= 0 && m < 24) {
-                return n >= 0 && n < 24 ? (double)field_16649[n * 24 * 24 + l * 24 + m] : 0.0D;
+    private static double getNoiseWeight(int x, int y, int z) {
+        int i = x + 12;
+        int j = y + 12;
+        int k = z + 12;
+        if (i >= 0 && i < 24) {
+            if (j >= 0 && j < 24) {
+                return k >= 0 && k < 24 ? (double)NOISE_WEIGHT_TABLE[k * 24 * 24 + i * 24 + j] : 0.0D;
             } else {
                 return 0.0D;
             }
@@ -631,9 +597,9 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         }
     }
 
-    private static double method_16571(int i, int j, int k) {
-        double d = (double)(i * i + k * k);
-        double e = (double)j + 0.5D;
+    private static double calculateNoiseWeight(int x, int y, int z) {
+        double d = x * x + z * z;
+        double e = (double)y + 0.5D;
         double f = e * e;
         double g = Math.pow(2.718281828459045D, -(f / 16.0D + d / 16.0D));
         double h = -e * MathHelper.fastInverseSqrt(f / 2.0D + d / 2.0D) / 2.0D;
@@ -641,11 +607,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     public int getMaxY() {
-        return this.field_24779;
+        return this.worldHeight;
     }
 
     public int getSeaLevel() {
-        return this.chunkGeneratorType.getSeaLevel();
+        return this.settings.get().getSeaLevel();
     }
 
     public List<SpawnSettings.SpawnEntry> getEntitySpawnList(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos) {
@@ -663,7 +629,6 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
             if (accessor.getStructureAt(pos, false, StructureFeature.PILLAGER_OUTPOST).hasChildren()) {
                 return StructureFeature.PILLAGER_OUTPOST.getMonsterSpawns();
             }
-
             if (accessor.getStructureAt(pos, false, StructureFeature.MONUMENT).hasChildren()) {
                 return StructureFeature.MONUMENT.getMonsterSpawns();
             }
@@ -672,22 +637,100 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                 return StructureFeature.FORTRESS.getMonsterSpawns();
             }
         }
-
         return super.getEntitySpawnList(biome, accessor, group, pos);
     }
 
-    public void populateEntities(ChunkRegion region) {
-        if (!false) {
-            int i = region.getCenterChunkX();
-            int j = region.getCenterChunkZ();
-            Biome biome = region.getBiome((new ChunkPos(i, j)).getStartPos());
-            ChunkRandom chunkRandom = new ChunkRandom();
-            chunkRandom.setPopulationSeed(region.getSeed(), i << 4, j << 4);
-            SpawnHelper.populateEntities(region, biome, i, j, chunkRandom);
+    public void setStructureStarts(DynamicRegistryManager dynamicRegistryManager, StructureAccessor structureAccessor, Chunk chunk, StructureManager structureManager, long worldSeed) {
+        ChunkPos chunkPos = chunk.getPos();
+        Biome biome = this.biomeSource.getBiomeForNoiseGen((chunkPos.x << 2) + 2, 0, (chunkPos.z << 2) + 2);
+        if(ImgGen.CONFIG.customStructures){
+            if(this.structuresSource == null){
+                this.structuresSource = new StructuresSource(dynamicRegistryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN));
+            }
+            for (Object o : structuresSource.getStructuresInPos(chunkPos)) {
+                if(o!=null) {
+                    ConfiguredStructureFeature<?, ?> configuredStructureFeature = (ConfiguredStructureFeature<?, ?>) o;
+                    this.setStructureStart(configuredStructureFeature, dynamicRegistryManager, structureAccessor, chunk, structureManager, worldSeed, chunkPos, biome, true);
+                }
+            }
+        }
+        if(ImgGen.CONFIG.placeVanillaStructures){
+            this.setStructureStart(ConfiguredStructureFeatures.STRONGHOLD, dynamicRegistryManager, structureAccessor, chunk, structureManager, worldSeed, chunkPos, biome,false);
+            for (Supplier<ConfiguredStructureFeature<?, ?>> configuredStructureFeatureSupplier : biome.getGenerationSettings().getStructureFeatures()) {
+                this.setStructureStart(configuredStructureFeatureSupplier.get(), dynamicRegistryManager, structureAccessor, chunk, structureManager, worldSeed, chunkPos, biome,false);
+            }
         }
     }
 
 
+
+    private void setStructureStart(ConfiguredStructureFeature<?, ?> configuredStructureFeature, DynamicRegistryManager dynamicRegistryManager, StructureAccessor structureAccessor, Chunk chunk, StructureManager structureManager, long worldSeed, ChunkPos chunkPos, Biome biome, Boolean bl) {
+        StructureStart<?> structureStart = structureAccessor.getStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, chunk);
+        int i = structureStart != null ? structureStart.getReferences() : 0;
+        StructureConfig structureConfig = this.structuresConfig.getForType(configuredStructureFeature.feature);
+        if (structureConfig != null) {
+            if(bl){
+                StructureStart<FeatureConfig> structureStart2 = (StructureStart<FeatureConfig>) configuredStructureFeature.feature.createStart(chunkPos.x, chunkPos.z, BlockBox.empty(), i, worldSeed);
+                structureStart2.init(dynamicRegistryManager, this, structureManager, chunkPos.x, chunkPos.z, biome, configuredStructureFeature.config);
+                structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
+            }else{
+                StructureStart<?> structureStart2 = configuredStructureFeature.tryPlaceStart(dynamicRegistryManager, this, this.biomeSource, structureManager, worldSeed, chunkPos, biome, i, structureConfig);
+                structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
+            }
+        }
+
+    }
+
+    public void addStructureReferences(StructureWorldAccess structureWorldAccess, StructureAccessor accessor, Chunk chunk) {
+
+        int j = chunk.getPos().x;
+        int k = chunk.getPos().z;
+        int l = j << 4;
+        int m = k << 4;
+        ChunkSectionPos chunkSectionPos = ChunkSectionPos.from(chunk.getPos(), 0);
+
+        for(int n = j - 8; n <= j + 8; ++n) {
+            for(int o = k - 8; o <= k + 8; ++o) {
+                long p = ChunkPos.toLong(n, o);
+                Iterator var14 = structureWorldAccess.getChunk(n, o).getStructureStarts().values().iterator();
+
+                while(var14.hasNext()) {
+                    StructureStart structureStart = (StructureStart)var14.next();
+
+                    try {
+                        if (structureStart != StructureStart.DEFAULT && structureStart.getBoundingBox().intersectsXZ(l, m, l + 15, m + 15)) {
+                            accessor.addStructureReference(chunkSectionPos, structureStart.getFeature(), p, chunk);
+                            DebugInfoSender.sendStructureStart(structureWorldAccess, structureStart);
+                        }
+                    } catch (Exception var19) {
+                        CrashReport crashReport = CrashReport.create(var19, "Generating structure reference");
+                        CrashReportSection crashReportSection = crashReport.addElement("Structure");
+                        crashReportSection.add("Id", () -> {
+                            return Registry.STRUCTURE_FEATURE.getId(structureStart.getFeature()).toString();
+                        });
+                        crashReportSection.add("Name", () -> {
+                            return structureStart.getFeature().getName();
+                        });
+                        crashReportSection.add("Class", () -> {
+                            return structureStart.getFeature().getClass().getCanonicalName();
+                        });
+                        throw new CrashException(crashReport);
+                    }
+                }
+            }
+        }
+
+    }
+
+    public void populateEntities(ChunkRegion region) {
+        int i = region.getCenterChunkX();
+        int j = region.getCenterChunkZ();
+        Biome biome = region.getBiome((new ChunkPos(i, j)).getStartPos());
+        ChunkRandom chunkRandom = new ChunkRandom();
+        chunkRandom.setPopulationSeed(region.getSeed(), i << 4, j << 4);
+        SpawnHelper.populateEntities(region, biome, i, j, chunkRandom);
+
+    }
 
     static {
         AIR = Blocks.AIR.getDefaultState();

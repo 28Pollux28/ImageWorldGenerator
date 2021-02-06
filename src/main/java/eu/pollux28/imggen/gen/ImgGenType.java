@@ -8,7 +8,6 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
-import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
 
 public class ImgGenType extends GeneratorType {
     public ImgGenType(String translationKey){
@@ -19,7 +18,7 @@ public class ImgGenType extends GeneratorType {
     @Override
     protected ChunkGenerator getChunkGenerator(Registry<Biome> biomeRegistry, Registry<ChunkGeneratorSettings> chunkGeneratorSettingsRegistry, long seed) {
         ImgGen.biomeSource = new ImgGenBiomeSource(seed, biomeRegistry);
-        return new NoiseChunkGenerator(ImgGen.biomeSource, seed, () -> chunkGeneratorSettingsRegistry.get(ChunkGeneratorSettings.OVERWORLD));
+        return new ImgGenChunkGenerator(ImgGen.biomeSource, seed, () -> chunkGeneratorSettingsRegistry.get(ChunkGeneratorSettings.OVERWORLD));
     }
 
 

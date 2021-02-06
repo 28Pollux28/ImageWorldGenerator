@@ -24,8 +24,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
 
 import static net.minecraft.util.math.MathHelper.square;
 
@@ -57,7 +57,7 @@ public class ImgGenBiomeSource extends BiomeSource {
     private final Int2ObjectOpenHashMap<Biome> colorsForBiome = new Int2ObjectOpenHashMap<>();
     private Biome defaultBiome;
     private double scale;
-    public MainConfigData config;
+    public final MainConfigData config;
     private final Registry<Biome> biomeRegistry;
 
 
@@ -340,8 +340,8 @@ public class ImgGenBiomeSource extends BiomeSource {
         Crimson_Forest(0xDD0808,BiomeKeys.CRIMSON_FOREST),
         Warped_Forest(0x49907B,BiomeKeys.WARPED_FOREST),
         Basalt_Deltas(0x403636,BiomeKeys.BASALT_DELTAS);
-        int RGB;
-        RegistryKey<Biome> biome;
+        final int RGB;
+        final RegistryKey<Biome> biome;
         BiomesC(int RGB, RegistryKey<Biome> biome){
             this.RGB =RGB;
             this.biome = biome;

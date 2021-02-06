@@ -7,6 +7,7 @@ import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import net.minecraft.util.registry.DynamicRegistryManager;
+import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.biome.Biome;
@@ -14,7 +15,7 @@ import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
-import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,13 +49,13 @@ public class MixinGeneratorOptions {
             }
             Registry<DimensionType> dimensionTypes = dynamicRegistryManager.get(Registry.DIMENSION_TYPE_KEY);
             Registry<Biome> biomes = dynamicRegistryManager.get(Registry.BIOME_KEY);
+            MutableRegistry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures = dynamicRegistryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN);
             Registry<ChunkGeneratorSettings> chunkGeneratorSettings = dynamicRegistryManager.get(Registry.NOISE_SETTINGS_WORLDGEN);
             SimpleRegistry<DimensionOptions> dimensions = DimensionType.createDefaultDimensionOptions(dimensionTypes, biomes,chunkGeneratorSettings,l);
-
             String generate_structures = (String)properties.get("generate-structures");
-            boolean generateStructures = generate_structures == null || Boolean.parseBoolean(generate_structures);
-            ImgGen.biomeSource= new ImgGenBiomeSource(l,biomes);
-            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensionTypes,dimensions ,new NoiseChunkGenerator(ImgGen.biomeSource, l,() -> chunkGeneratorSettings.get(ChunkGeneratorSettings.OVERWORLD)))));
+            boolean generateStructures = generate_structures == null || Boolean.parseBoolean(generate_structures) || ImgGen.CONFIG.customStructures||ImgGen.CONFIG.placeVanillaStructures;
+            ImgGen.biomeSource = new ImgGenBiomeSource(l,biomes);
+            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensionTypes,dimensions ,new ImgGenChunkGenerator(ImgGen.biomeSource, l,() -> chunkGeneratorSettings.get(ChunkGeneratorSettings.OVERWORLD),configuredStructureFeatures))));
         }
     }
 }
