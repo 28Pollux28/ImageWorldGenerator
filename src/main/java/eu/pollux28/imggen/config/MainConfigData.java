@@ -19,7 +19,7 @@ public class MainConfigData {
     public boolean customStructures = false;
     public boolean placeVanillaStructures = false;
     public String customStructuresMap = "structureMap.png";
-    public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("","0x123456"), new StructureAndRGBPair("","0x024680"));
+    public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("structureid","0x123456"), new StructureAndRGBPair("structureid","0x024680"));
 
 
     @Override
