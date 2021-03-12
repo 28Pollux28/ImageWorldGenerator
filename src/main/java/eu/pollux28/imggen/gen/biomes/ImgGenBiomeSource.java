@@ -74,8 +74,8 @@ public class ImgGenBiomeSource extends BiomeSource {
             sizeX=image.getWidth();
             sizeZ=image.getHeight();
             loadBiomes();
-            generateCache();
-            dumpImage();
+            //generateCache();
+            //dumpImage();
         }
     }
     @Override
@@ -195,7 +195,7 @@ public class ImgGenBiomeSource extends BiomeSource {
             zBase=z<<2;
         }
 
-        return BiomePosCache.getOrDefault(new Vec3i(xBase, 0, zBase), defaultBiome);
+        return getBiomeFromImage(new Vec3i(xBase, 0, zBase));
         /*Set<BiomeCount> biomesAround = new HashSet<>();
 
         for(int iz = -2; iz<= 2; iz++) {
@@ -216,6 +216,24 @@ public class ImgGenBiomeSource extends BiomeSource {
             }
         }
         return biomesAround.parallelStream().max(Comparator.comparingInt((bci) -> bci.count)).get().biome();*/
+    }
+
+    private Biome getBiomeFromImage(Vec3i vec){
+        int x = vec.getX() + sizeX/2;
+        int z = vec.getZ() + sizeZ/2;
+
+        if (x > sizeX - 1 || x < 0 || z > sizeZ - 1 || z < 0){
+            return defaultBiome;
+        }
+
+        int RGB = image.getRGB(x, z)&0xFFFFFF;
+        if(!this.colorsForBiome.containsKey(RGB)){
+            Biome biome = biomesRefColors.int2ObjectEntrySet().stream().sequential().min(Comparator.comparingDouble(
+                    (bt1) -> getColorDiff(RGB, bt1.getIntKey()))).get().getValue();
+            this.colorsForBiome.put(RGB, biome);
+        }
+
+        return this.colorsForBiome.get(RGB);
     }
 
     public BufferedImage setImage(String pathname){
