@@ -10,10 +10,9 @@ import java.util.Objects;
 
 public class MainConfigData {
     public String configVersion = ImgGen.VERSION;
-    public String imageName="worldImage.png";
-    public double scale = 4.0;
-    public String defaultBiome="minecraft:ocean";
-    public boolean repeatImg = false;
+    public String imageName = "worldImage.png";
+    public double scale = 4;
+    public String defaultBiome = "minecraft:ocean";
 
     public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
     public float lakeFormationPercentChance = 0.5f;

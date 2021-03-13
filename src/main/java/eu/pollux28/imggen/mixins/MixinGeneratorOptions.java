@@ -11,6 +11,7 @@ import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.GeneratorOptions;
@@ -51,11 +52,11 @@ public class MixinGeneratorOptions {
             Registry<Biome> biomes = dynamicRegistryManager.get(Registry.BIOME_KEY);
             MutableRegistry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures = dynamicRegistryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN);
             Registry<ChunkGeneratorSettings> chunkGeneratorSettings = dynamicRegistryManager.get(Registry.NOISE_SETTINGS_WORLDGEN);
-            SimpleRegistry<DimensionOptions> dimensions = DimensionType.createDefaultDimensionOptions(dimensionTypes, biomes,chunkGeneratorSettings,l);
-            String generate_structures = (String)properties.get("generate-structures");
-            boolean generateStructures = generate_structures == null || Boolean.parseBoolean(generate_structures) || ImgGen.CONFIG.customStructures||ImgGen.CONFIG.placeVanillaStructures;
-            ImgGen.biomeSource = new ImgGenBiomeSource(l,biomes);
-            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensionTypes,dimensions ,new ImgGenChunkGenerator(ImgGen.biomeSource, l,() -> chunkGeneratorSettings.get(ChunkGeneratorSettings.OVERWORLD),configuredStructureFeatures))));
+            SimpleRegistry<DimensionOptions> dimensions = DimensionType.createDefaultDimensionOptions(dimensionTypes, biomes, chunkGeneratorSettings, l);
+            String generate_structures = (String) properties.get("generate-structures");
+            boolean generateStructures = generate_structures == null || Boolean.parseBoolean(generate_structures) || ImgGen.CONFIG.customStructures || ImgGen.CONFIG.placeVanillaStructures;
+            BiomeSource biomeSource = new ImgGenBiomeSource(l, biomes);
+            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensionTypes, dimensions, new ImgGenChunkGenerator(biomeSource, l, () -> chunkGeneratorSettings.get(ChunkGeneratorSettings.OVERWORLD), configuredStructureFeatures))));
         }
     }
 }
