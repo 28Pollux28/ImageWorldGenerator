@@ -57,17 +57,16 @@ public class ImgGenBiomeSource extends BiomeSource {
     private final Int2ObjectOpenHashMap<Biome> colorsForBiome = new Int2ObjectOpenHashMap<>();
     private Biome defaultBiome;
     private double scale;
-    public final MainConfigData config;
     private final Registry<Biome> biomeRegistry;
 
 
     public ImgGenBiomeSource(long seed, Registry<Biome> biomeRegistry) {
         super(BIOMES.stream().map((registryKey) -> () -> (Biome)biomeRegistry.getOrThrow(registryKey)));
         ImgGen.refreshConfig();
-        config = ImgGen.CONFIG;
+//        config = ImgGen.CONFIG;
         this.seed=seed;
         this.biomeRegistry=biomeRegistry;
-        this.image = setImage(config.imageName);
+        this.image = setImage(ImgGen.CONFIG.imageName);
         getDefaultBiome();
         if(this.image!=null) {
             this.imgSet = true;
@@ -222,8 +221,23 @@ public class ImgGenBiomeSource extends BiomeSource {
         int x = vec.getX() + sizeX/2;
         int z = vec.getZ() + sizeZ/2;
 
-        if (x > sizeX - 1 || x < 0 || z > sizeZ - 1 || z < 0){
+        if ((x > sizeX - 1 || x < 0 || z > sizeZ - 1 || z < 0)&&!ImgGen.CONFIG.repeatImg){
             return defaultBiome;
+        }
+        else if (ImgGen.CONFIG.repeatImg){
+            int repeatX = (x/(sizeX))%2;
+            x=x%(sizeX);
+            if(repeatX==1){
+                x=sizeX-1-x;
+            }
+            /*   int sizeX = 500;
+        int x = -599;
+        x= x<0 ? -x:x;
+        int repeatX = (x/(sizeX))%2 ;
+        x=x%(sizeX);
+        if(repeatX==1){
+            x=(sizeX-1)-x;
+        }*/
         }
 
         int RGB = image.getRGB(x, z)&0xFFFFFF;
