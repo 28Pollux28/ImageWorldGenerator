@@ -1,6 +1,6 @@
 package eu.pollux28.imggen.gen;
 //Code used from Simplex Terrain <https://github.com/SuperCoder7979/simplexterrain>, with permission from SuperCoder79
-import eu.pollux28.imggen.ImgGen;
+
 import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import net.minecraft.client.world.GeneratorType;
@@ -13,6 +13,7 @@ import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
 public class ImgGenType extends GeneratorType {
     public ImgGenType(String translationKey){
         super("imggen");
+        //Registers the Generatortype
         GeneratorType.VALUES.add(this);
     }
 

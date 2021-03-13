@@ -7,13 +7,11 @@ import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.data.BiomeColorConverter;
 import eu.pollux28.imggen.data.BiomeColors;
-import eu.pollux28.imggen.data.ColorConverter;
 import eu.pollux28.imggen.data.ImageDataProvider;
 import eu.pollux28.imggen.util.BiomeIDAndRGBPair;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.util.registry.RegistryLookupCodec;
@@ -23,15 +21,11 @@ import net.minecraft.world.biome.source.BiomeSource;
 import org.apache.logging.log4j.Level;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
 import java.util.List;
-
-import static net.minecraft.util.math.MathHelper.square;
 
 public class ImgGenBiomeSource extends BiomeSource {
 
@@ -55,28 +49,49 @@ public class ImgGenBiomeSource extends BiomeSource {
     private final Registry<Biome> biomeRegistry;
 
     private final BiomeColorConverter biomeColorConverter;
-    private final ImageDataProvider<Biome> biomeProvider;
+    private final ImageDataProvider<Biome> biomeDataProvider;
 
     public ImgGenBiomeSource(long seed, Registry<Biome> biomeRegistry) {
-        super(BIOMES.stream().map((registryKey) -> () -> (Biome)biomeRegistry.getOrThrow(registryKey)));
+        super(BIOMES.stream().map((registryKey) -> () -> (Biome) biomeRegistry.getOrThrow(registryKey)));
 
-        this.seed=seed;
-        this.biomeRegistry=biomeRegistry;
+        this.seed = seed;
+        this.biomeRegistry = biomeRegistry;
 
         ImgGen.refreshConfig();
         MainConfigData config = ImgGen.CONFIG;
 
-        Biome defaultBiome = getDefaultBiome();
-        biomeColorConverter = new BiomeColorConverter(defaultBiome);
+        boolean isClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
 
-        BufferedImage image = setImage(config.imageName);
-        biomeProvider = new ImageDataProvider<>(biomeColorConverter, image, config.scale);
+        if (ImgGen.biomeColorConverter == null || isClient) {
+            Biome defaultBiome = getDefaultBiome();
+            ImgGen.biomeColorConverter = new BiomeColorConverter(defaultBiome);
+            biomeColorConverter = ImgGen.biomeColorConverter;
+            registerBiomes();
+        } else {
+            biomeColorConverter = ImgGen.biomeColorConverter;
+        }
+        if (ImgGen.biomeDataProvider == null || isClient) {
+            BufferedImage image = loadImage(config.imageName);
+            ImgGen.biomeDataProvider = new ImageDataProvider<>(ImgGen.biomeColorConverter, image, config.scale);
+            ;
+        }
 
-        registerBiomes();
+
+        biomeDataProvider = ImgGen.biomeDataProvider;
     }
-    @Override
-    public Biome getBiomeForNoiseGen(int biomeX, int biomeY, int biomeZ) {
-        return biomeProvider.GetData(biomeX,biomeZ);
+
+    private static BufferedImage loadImage(String pathname) {
+        BufferedImage img = null;
+        try {
+            Path configDir = Paths.get("", "imggen", "image", pathname);
+            img = ImageIO.read(configDir.toFile());
+
+        } catch (IOException e) {
+            e.getCause();
+            ImgGen.logger.log(Level.ERROR, "Couldn't find image at /imggen/image/" + pathname);
+        }
+
+        return img;
     }
 
     @Override
@@ -85,8 +100,7 @@ public class ImgGenBiomeSource extends BiomeSource {
     }
 
     @Override
-    public BiomeSource withSeed(long seed)
-    {
+    public BiomeSource withSeed(long seed) {
         this.seed = seed;
         return this;
     }
@@ -143,24 +157,15 @@ public class ImgGenBiomeSource extends BiomeSource {
         }
     }
 
-    public BufferedImage setImage(String pathname){
-        BufferedImage img = null;
-        try {
-            Path configDir = Paths.get("", "imggen", "image", pathname);
-            img = ImageIO.read(configDir.toFile());
-
-        } catch (IOException e) {
-            e.getCause();
-            ImgGen.logger.log(Level.ERROR,"Couldn't find image at /imggen/image/"+pathname);
-        }
-
-        return img;
+    @Override
+    public Biome getBiomeForNoiseGen(int biomeX, int biomeY, int biomeZ) {
+        return biomeDataProvider.GetData(biomeX, biomeZ);
     }
 
     private Identifier getIdFromString(String biomeID) {
         String[] str = biomeID.toLowerCase().split(":");
-        if (str.length!=2){
+        if (str.length != 2) {
             return null;
-        }else return new Identifier(str[0],str[1]);
+        } else return new Identifier(str[0], str[1]);
     }
 }
