@@ -30,19 +30,18 @@ public class ImgGen implements ModInitializer {
     @Override
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void onInitialize() {
-        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT){
-            levelGeneratorType = new ImgGenType("imggen");
-        }
+        //if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT){
+         //   levelGeneratorType = new ImgGenType("imggen");
+        //}
         Path genMapDir = Paths.get("", "imggen","image");
         if (!Files.isDirectory(genMapDir)){
             genMapDir.toFile().mkdirs();
         }
         Config.init();
-        Registry.register(Registry.CHUNK_GENERATOR, new Identifier("imggen:imggen"), ImgGenChunkGenerator.CODEC);
         Registry.register(Registry.BIOME_SOURCE, new Identifier("imggen:imggen"), ImgGenBiomeSource.CODEC);
-
-
+        Registry.register(Registry.CHUNK_GENERATOR, new Identifier("imggen:imggen"), ImgGenChunkGenerator.CODEC);
     }
+
     public static void refreshConfig(){
         ImgGen.CONFIG= ConfigUtil.getFromConfig(MainConfigData.class,Paths.get("", "config", "imggen.json"));
     }

@@ -11,7 +11,7 @@ import java.util.Objects;
 public class MainConfigData {
     public String configVersion = ImgGen.VERSION;
     public String imageName="worldImage.png";
-    public double scale = 1.0;
+    public double scale = 1;
     public String defaultBiome="minecraft:ocean";
 
     public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
