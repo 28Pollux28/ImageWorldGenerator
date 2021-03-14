@@ -4,6 +4,7 @@ import eu.pollux28.imggen.config.Config;
 import eu.pollux28.imggen.config.ConfigUtil;
 import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.data.BiomeColorConverter;
+import eu.pollux28.imggen.data.HeightMapColorConverter;
 import eu.pollux28.imggen.data.ImageDataProvider;
 import eu.pollux28.imggen.gen.ImgGenType;
 import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
@@ -28,6 +29,8 @@ public class ImgGen implements ModInitializer {
 
     public static BiomeColorConverter biomeColorConverter;
     public static ImageDataProvider<Biome> biomeDataProvider;
+    public static HeightMapColorConverter heightMapColorConverter;
+    public static ImageDataProvider<Integer> heightMapDataProvider;
 
     private ImgGenType imgGenType;
 

@@ -7,7 +7,9 @@ import org.apache.logging.log4j.Level;
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static net.minecraft.util.math.MathHelper.square;
 
@@ -20,7 +22,8 @@ public class BiomeColorConverter implements ColorConverter<Biome> {
     public BiomeColorConverter(Biome defaultValue){
         this.defaultValue = defaultValue;
 
-        this.biomeColorMap = new HashMap<>();
+        this.biomeColorMap = new ConcurrentHashMap<>();
+
     }
 
     @Override
@@ -36,7 +39,7 @@ public class BiomeColorConverter implements ColorConverter<Biome> {
         biome = biomeColorMap.entrySet().stream().sequential().min(Comparator.comparingDouble(
                 (bt1) -> getColorDiff(finalColor, bt1.getKey()))).get().getValue();
 
-        ImgGen.logger.log(Level.WARN, "Found unmapped color code " + Integer.toHexString(color) + "! Mapping it to similar color!");
+        ImgGen.logger.log(Level.DEBUG, "Found unmapped color code " + Integer.toHexString(color) + "! Mapping it to similar color!");
         RegisterBiome(color, biome);
 
         return biome;

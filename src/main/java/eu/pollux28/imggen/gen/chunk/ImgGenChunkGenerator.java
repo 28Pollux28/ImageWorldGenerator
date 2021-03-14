@@ -3,6 +3,7 @@ package eu.pollux28.imggen.gen.chunk;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import eu.pollux28.imggen.ImgGen;
+import eu.pollux28.imggen.gen.heightmap.HeightMapSource;
 import eu.pollux28.imggen.gen.structures.StructuresSource;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -89,6 +90,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     private final int worldHeight;
     private final StructuresConfig structuresConfig;
     private StructuresSource structuresSource = null;
+    private HeightMapSource heightMapSource = null;
 
     public ImgGenChunkGenerator(BiomeSource biomeSource, long worldSeed, Supplier<ChunkGeneratorSettings> supplier) {
         this(biomeSource, biomeSource, worldSeed, supplier);
@@ -345,7 +347,6 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         } else {
             blockState3 = AIR;
         }
-
         return blockState3;
     }
 
@@ -367,6 +368,10 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                 int o = k + m;
                 int p = l + n;
                 int q = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, m, n) + 1;
+                int z = heightMapSource.getHeight(o,p)+1;
+                if(q<63){
+                    boolean test = true;
+                }
                 double e = this.surfaceDepthNoise.sample((double)o * 0.0625D, (double)p * 0.0625D, 0.0625D, (double)m * 0.0625D) * 15.0D;
                 Biome biome = region.getBiome(mutable.set(k + m, q, l + n));
                 BlockState blockState = this.defaultBlock;
@@ -375,7 +380,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                     blockState = Blocks.NETHERRACK.getDefaultState();
                     blockStateF = Blocks.LAVA.getDefaultState();
                 }
-                biome.buildSurface(chunkRandom, chunk, o, p, q, e, blockState, blockStateF, this.getSeaLevel(), region.getSeed());
+                biome.buildSurface(chunkRandom, chunk, o, p, q, e, blockState, blockStateF, z, region.getSeed());
 
             }
         }
@@ -422,6 +427,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     public void populateNoise(WorldAccess world, StructureAccessor accessor, Chunk chunk) {
+        if(ImgGen.CONFIG.customHeightMap) {
+            if (this.heightMapSource == null) {
+                this.heightMapSource = new HeightMapSource(getSeaLevel());
+            }
+        }
         ObjectList<StructurePiece> objectList = new ObjectArrayList(10);
         ObjectList<JigsawJunction> objectList2 = new ObjectArrayList(32);
         ChunkPos chunkPos = chunk.getPos();
@@ -553,13 +563,25 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
 
                                 objectListIterator2.back(objectList2.size());
                                 BlockState blockState = this.getBlockState(ao, v);
+                                Biome biome2 = biomeSource.getBiomeForNoiseGen((k+af)>>2, w>>2,(l+al)>>2);
+                                if(ImgGen.CONFIG.customHeightMap) {
+                                    int height =heightMapSource.getHeight(k+af,l+al);//chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, (k+af), (l+al));
+                                    if(v>height){
+                                        blockState=AIR;
+                                    }else{
+                                        if(blockState != this.defaultFluid){ //&&biome2.getCategory() != Biome.Category.OCEAN
+                                          blockState=this.defaultBlock;
+                                        }
+                                    }
+                                }
+
                                 if (blockState != AIR) {
                                     if (blockState.getLuminance() != 0) {
                                         mutable.set(ae, v, ak);
                                         protoChunk.addLightSource(mutable);
                                     }
                                     //Biome biome =world.getBiome(new BlockPos(k+af,w,l+al));
-                                    Biome biome2 = biomeSource.getBiomeForNoiseGen((k+af)>>2, w>>2,(l+al)>>2);
+
                                     if(biome2.getCategory()==Biome.Category.NETHER){
                                         blockState = Blocks.NETHERRACK.getDefaultState();
                                     }
@@ -611,7 +633,8 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     public int getSeaLevel() {
-        return this.settings.get().getSeaLevel();
+        return 255;
+        //return this.settings.get().getSeaLevel();
     }
 
     public List<SpawnSettings.SpawnEntry> getEntitySpawnList(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos) {

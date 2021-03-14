@@ -25,8 +25,8 @@ public final class ImageDataProvider<T> {
     }
 
     public T GetData(int x, int y){
-        int centeredX = (int)Math.floor(x / (scale / 4.0)) + width / 2;
-        int centeredY = (int)Math.floor(y / (scale / 4.0))  + height / 2;
+        int centeredX = (int)Math.floor(x / (scale )) + width / 2;
+        int centeredY = (int)Math.floor(y / (scale ) ) + height / 2;
 
         if (centeredX < 0         || centeredY < 0 ||
             centeredX > width - 1 || centeredY > height - 1 ||

@@ -20,6 +20,8 @@ public class MainConfigData {
     public boolean placeVanillaStructures = true;
     public String customStructuresMap = "structureMap.png";
     public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("structureid","0x123456"), new StructureAndRGBPair("structureid","0x024680"));
+    public boolean customHeightMap = false;
+    public String HeightMapName = "HeightMap.png";
 
 
     @Override
