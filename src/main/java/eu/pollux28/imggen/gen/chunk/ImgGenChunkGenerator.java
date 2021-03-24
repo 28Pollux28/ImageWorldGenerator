@@ -129,6 +129,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
             this.islandNoise = null;
         }
         this.structuresConfig = supplier.get().getStructuresConfig();
+        ImgGen.refreshConfig();
         if(ImgGen.CONFIG.customHeightMap) {
             if (this.heightMapSource == null) {
                 this.heightMapSource = new HeightMapSource(63);
