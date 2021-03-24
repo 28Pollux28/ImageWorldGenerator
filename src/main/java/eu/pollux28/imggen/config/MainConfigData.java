@@ -12,16 +12,15 @@ public class MainConfigData {
     public String configVersion = ImgGen.VERSION;
     public String imageName = "worldImage.png";
     public double scale = 4;
-    public String defaultBiome = "minecraft:ocean";
-
-    public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
-    public float lakeFormationPercentChance = 0.5f;
-    public boolean customStructures = false;
-    public boolean placeVanillaStructures = true;
-    public String customStructuresMap = "structureMap.png";
-    public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("structureid","0x123456"), new StructureAndRGBPair("structureid","0x024680"));
     public boolean customHeightMap = false;
     public String HeightMapName = "HeightMap.png";
+    public String defaultBiome = "minecraft:ocean";
+    public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
+    public boolean placeVanillaStructures = true;
+    public boolean customStructures = false;
+    public String customStructuresMap = "structureMap.png";
+    public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("structureid","0x123456"), new StructureAndRGBPair("structureid","0x024680"));
+    public float lakeFormationPercentChance = 0.5f;
 
 
     @Override
@@ -29,16 +28,6 @@ public class MainConfigData {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MainConfigData that = (MainConfigData) o;
-       /* boolean equal = true;
-        try {
-            for(Field t:that.getClass().getDeclaredFields()) {
-                if(this.getClass().getField(t.getName())!=t){return false;}
-            }
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return equal;*/
         return Double.compare(that.scale, scale) == 0 &&
                 Float.compare(that.lakeFormationPercentChance, lakeFormationPercentChance) == 0 &&
                 configVersion.equals(that.configVersion) &&
