@@ -73,7 +73,7 @@ public class ImgGenBiomeSource extends BiomeSource {
         if (ImgGen.biomeDataProvider == null || isClient) {
             BufferedImage image = loadImage(config.imageName);
             ImgGen.biomeDataProvider = new ImageDataProvider<>(ImgGen.biomeColorConverter, image, config.scale);
-            ;
+
         }
 
 
@@ -159,7 +159,7 @@ public class ImgGenBiomeSource extends BiomeSource {
 
     @Override
     public Biome getBiomeForNoiseGen(int biomeX, int biomeY, int biomeZ) {
-        return biomeDataProvider.GetData(biomeX, biomeZ);
+        return biomeDataProvider.GetData(biomeX*4, biomeZ*4);
     }
 
     private Identifier getIdFromString(String biomeID) {
