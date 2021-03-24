@@ -28,23 +28,25 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.*;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.GenerationSettings;
 import net.minecraft.world.biome.SpawnSettings;
+import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.biome.source.TheEndBiomeSource;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.ProtoChunk;
 import net.minecraft.world.gen.ChunkRandom;
+import net.minecraft.world.gen.GenerationStep;
 import net.minecraft.world.gen.StructureAccessor;
+import net.minecraft.world.gen.carver.ConfiguredCarver;
 import net.minecraft.world.gen.chunk.*;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeatures;
 import net.minecraft.world.gen.feature.FeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -127,6 +129,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
             this.islandNoise = null;
         }
         this.structuresConfig = supplier.get().getStructuresConfig();
+        if(ImgGen.CONFIG.customHeightMap) {
+            if (this.heightMapSource == null) {
+                this.heightMapSource = new HeightMapSource(63);
+            }
+        }
     }
 
 
@@ -292,7 +299,9 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     public int getHeight(int x, int z, Heightmap.Type heightmapType) {
-        return this.sampleHeightmap(x, z, null, heightmapType.getBlockPredicate());
+        if(ImgGen.CONFIG.customHeightMap){
+            return this.heightMapSource.getHeight(x,z);
+        }else return this.sampleHeightmap(x, z, null, heightmapType.getBlockPredicate());
     }
 
     public BlockView getColumnSample(int x, int z) {
@@ -427,11 +436,6 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     public void populateNoise(WorldAccess world, StructureAccessor accessor, Chunk chunk) {
-        if(ImgGen.CONFIG.customHeightMap) {
-            if (this.heightMapSource == null) {
-                this.heightMapSource = new HeightMapSource(getSeaLevel());
-            }
-        }
         ObjectList<StructurePiece> objectList = new ObjectArrayList(10);
         ObjectList<JigsawJunction> objectList2 = new ObjectArrayList(32);
         ChunkPos chunkPos = chunk.getPos();
@@ -565,13 +569,15 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                 BlockState blockState = this.getBlockState(ao, v);
                                 Biome biome2 = biomeSource.getBiomeForNoiseGen((k+af)>>2, w>>2,(l+al)>>2);
                                 if(ImgGen.CONFIG.customHeightMap) {
-                                    int height =heightMapSource.getHeight(k+af,l+al);//chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, (k+af), (l+al));
-                                    if(v>height){
-                                        blockState=AIR;
-                                    }else{
-                                        if(blockState != this.defaultFluid){ //&&biome2.getCategory() != Biome.Category.OCEAN
-                                          blockState=this.defaultBlock;
-                                        }
+                                    int height = heightMapSource.getHeight(ae, ak);//chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, (k+af), (l+al));
+                                    if (v > height) {
+                                        blockState = AIR;
+                                    } else if (biome2.getCategory() == Biome.Category.OCEAN && blockState == AIR) {
+                                        blockState = this.defaultFluid;
+                                    } else if (biome2.getCategory() != Biome.Category.OCEAN && blockState == defaultFluid) {
+                                        blockState = defaultBlock;
+                                    } else if (blockState == AIR) {
+                                        blockState = this.defaultBlock;
                                     }
                                 }
 
@@ -600,6 +606,37 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
             double[][] es = ds[0];
             ds[0] = ds[1];
             ds[1] = es;
+        }
+
+    }
+    @Override
+    public void carve(long seed, BiomeAccess access, Chunk chunk, GenerationStep.Carver carver) {
+        BiomeAccess biomeAccess = access.withSource(this.biomeSource);
+        ChunkRandom chunkRandom = new ChunkRandom();
+        ChunkPos chunkPos = chunk.getPos();
+        int j = chunkPos.x;
+        int k = chunkPos.z;
+        GenerationSettings generationSettings = this.biomeSource.getBiomeForNoiseGen(chunkPos.x << 2, 0, chunkPos.z << 2).getGenerationSettings();
+        BitSet bitSet = ((ProtoChunk)chunk).getOrCreateCarvingMask(carver);
+
+        for(int l = j - 8; l <= j + 8; ++l) {
+            for(int m = k - 8; m <= k + 8; ++m) {
+                List<Supplier<ConfiguredCarver<?>>> list = generationSettings.getCarversForStep(carver);
+                ListIterator listIterator = list.listIterator();
+
+                while(listIterator.hasNext()) {
+                    int n = listIterator.nextIndex();
+                    ConfiguredCarver<?> configuredCarver = (ConfiguredCarver)((Supplier)listIterator.next()).get();
+                    chunkRandom.setCarverSeed(seed + (long)n, l, m);
+                    if (configuredCarver.shouldCarve(chunkRandom, l, m)) {
+                        if(ImgGen.CONFIG.customHeightMap){
+                            configuredCarver.carve(chunk, biomeAccess::getBiome, chunkRandom, this.heightMapSource.getHeight(j*16+l,k*16+m), l, m, j, k, bitSet);
+                        }else{
+                            configuredCarver.carve(chunk, biomeAccess::getBiome, chunkRandom, this.getSeaLevel(), l, m, j, k, bitSet);
+                        }
+                    }
+                }
+            }
         }
 
     }
@@ -633,8 +670,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     }
 
     public int getSeaLevel() {
-        return 255;
-        //return this.settings.get().getSeaLevel();
+        return this.settings.get().getSeaLevel();
     }
 
     public List<SpawnSettings.SpawnEntry> getEntitySpawnList(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos) {
