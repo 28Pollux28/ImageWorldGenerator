@@ -58,6 +58,7 @@ public class HeightMapSource {
     public int getHeight(int x, int z){
         return heightMapDataProvider.GetData(x,z);
     }
+    public boolean isInImage(int x,int z){ return heightMapDataProvider.isInImage(x,z);}
 
 
 }

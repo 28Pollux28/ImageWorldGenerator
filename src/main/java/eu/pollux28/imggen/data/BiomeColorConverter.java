@@ -1,7 +1,9 @@
 package eu.pollux28.imggen.data;
 
 import eu.pollux28.imggen.ImgGen;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.source.BiomeLayerSampler;
 import org.apache.logging.log4j.Level;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
@@ -16,12 +18,14 @@ import static net.minecraft.util.math.MathHelper.square;
 public class BiomeColorConverter implements ColorConverter<Biome> {
 
     private Biome defaultValue;
-
+    private final BiomeLayerSampler biomeSampler;
+    private final Registry<Biome> biomeRegistry;
     private Map<Integer, Biome> biomeColorMap;
 
-    public BiomeColorConverter(Biome defaultValue){
+    public BiomeColorConverter(Biome defaultValue, BiomeLayerSampler biomeSampler, Registry<Biome>biomeRegistry){
         this.defaultValue = defaultValue;
-
+        this.biomeSampler = biomeSampler;
+        this.biomeRegistry = biomeRegistry;
         this.biomeColorMap = new ConcurrentHashMap<>();
 
     }
@@ -46,8 +50,12 @@ public class BiomeColorConverter implements ColorConverter<Biome> {
     }
 
     @Override
-    public Biome GetDefaultValue() {
-        return defaultValue;
+    public Biome GetDefaultValue(int biomeX,int biomeZ) {
+        if(ImgGen.CONFIG.continuousGen){
+            return this.biomeSampler.sample(this.biomeRegistry, biomeX, biomeZ);
+        }else{
+            return this.defaultValue;
+        }
     }
 
     public void RegisterBiome(int color, Biome biome){

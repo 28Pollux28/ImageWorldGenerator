@@ -22,18 +22,22 @@ public final class ImageDataProvider<T> {
             height = 0;
         }
     }
+    public boolean isInImage(int x, int y){
+        int centeredX = (int)Math.floor(x / (scale )) + width / 2;
+        int centeredY = (int)Math.floor(y / (scale )) + height / 2;
+
+        return !(centeredX < 0         || centeredY < 0 ||
+                centeredX > width - 1 || centeredY > height - 1 ||
+                image == null);
+
+    }
 
     public T GetData(int x, int y){
         int centeredX = (int)Math.floor(x / (scale )) + width / 2;
         int centeredY = (int)Math.floor(y / (scale )) + height / 2;
-
-        if (centeredX < 0         || centeredY < 0 ||
-            centeredX > width - 1 || centeredY > height - 1 ||
-            image == null)
-        {
-            return colorConverter.GetDefaultValue();
+        if (!isInImage(x,y)){
+            return colorConverter.GetDefaultValue(centeredX,centeredY);
         }
-
         int rgb = image.getRGB(centeredX, centeredY);
         return colorConverter.GetValue(rgb);
     }

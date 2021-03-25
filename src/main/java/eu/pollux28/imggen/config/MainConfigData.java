@@ -15,6 +15,8 @@ public class MainConfigData {
     public boolean customHeightMap = false;
     public String HeightMapName = "HeightMap.png";
     public String defaultBiome = "minecraft:ocean";
+    public Boolean continuousGen = true;
+    public Boolean largeBiomes = false;
     public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
     public boolean placeVanillaStructures = true;
     public boolean customStructures = false;

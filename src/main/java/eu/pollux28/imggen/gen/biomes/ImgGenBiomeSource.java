@@ -2,6 +2,7 @@ package eu.pollux28.imggen.gen.biomes;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.MainConfigData;
@@ -17,7 +18,10 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.util.registry.RegistryLookupCodec;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
+import net.minecraft.world.biome.layer.BiomeLayers;
+import net.minecraft.world.biome.source.BiomeLayerSampler;
 import net.minecraft.world.biome.source.BiomeSource;
+import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
 import org.apache.logging.log4j.Level;
 
 import javax.imageio.ImageIO;
@@ -29,7 +33,17 @@ import java.util.List;
 
 public class ImgGenBiomeSource extends BiomeSource {
 
-    public static final Codec<ImgGenBiomeSource> CODEC = RecordCodecBuilder.create((instance) -> instance.group(Codec.LONG.fieldOf("seed").stable().forGetter((imgGenBiomeSource) -> imgGenBiomeSource.seed), RegistryLookupCodec.of(Registry.BIOME_KEY).forGetter((imgGenBiomeSource) -> imgGenBiomeSource.biomeRegistry)).apply(instance, instance.stable(ImgGenBiomeSource::new)));
+    public static final Codec<ImgGenBiomeSource> CODEC = RecordCodecBuilder.create((instance) -> {
+        return instance.group(Codec.LONG.fieldOf("seed").stable().forGetter((imgGenBiomeSource) -> {
+            return imgGenBiomeSource.seed;
+        }), RegistryLookupCodec.of(Registry.BIOME_KEY).forGetter((imgGenBiomeSource) -> {
+            return imgGenBiomeSource.biomeRegistry;
+        }), Codec.BOOL.optionalFieldOf("legacy_biome_init_layer", false, Lifecycle.stable()).forGetter((vanillaLayeredBiomeSource) -> {
+            return vanillaLayeredBiomeSource.legacyBiomeInitLayer;
+        }), Codec.BOOL.fieldOf("large_biomes").orElse(false).stable().forGetter((imgGenBiomeSource) -> {
+            return imgGenBiomeSource.largeBiomes;
+        })).apply(instance, instance.stable(ImgGenBiomeSource::new));
+    });
     private static final List<RegistryKey<Biome>> BIOMES = ImmutableList.of(BiomeKeys.OCEAN, BiomeKeys.PLAINS, BiomeKeys.DESERT, BiomeKeys.MOUNTAINS,
             BiomeKeys.FOREST, BiomeKeys.TAIGA, BiomeKeys.SWAMP, BiomeKeys.RIVER, BiomeKeys.SNOWY_TUNDRA,
             BiomeKeys.SNOWY_MOUNTAINS, BiomeKeys.MUSHROOM_FIELDS, BiomeKeys.MUSHROOM_FIELD_SHORE, BiomeKeys.BEACH, BiomeKeys.DESERT_HILLS, BiomeKeys.WOODED_HILLS,
@@ -50,12 +64,18 @@ public class ImgGenBiomeSource extends BiomeSource {
 
     private final BiomeColorConverter biomeColorConverter;
     private final ImageDataProvider<Biome> biomeDataProvider;
+    private final BiomeLayerSampler biomeSampler;
+    private final boolean legacyBiomeInitLayer;
+    private final boolean largeBiomes;
 
-    public ImgGenBiomeSource(long seed, Registry<Biome> biomeRegistry) {
+    public ImgGenBiomeSource(long seed, Registry<Biome> biomeRegistry,boolean legacyBiomeInitLayer,boolean largeBiomes) {
         super(BIOMES.stream().map((registryKey) -> () -> (Biome) biomeRegistry.getOrThrow(registryKey)));
 
         this.seed = seed;
         this.biomeRegistry = biomeRegistry;
+        this.legacyBiomeInitLayer = legacyBiomeInitLayer;
+        this.largeBiomes = largeBiomes;
+        this.biomeSampler = BiomeLayers.build(seed, legacyBiomeInitLayer, largeBiomes ? 6 : 4, 4);
 
         ImgGen.refreshConfig();
         MainConfigData config = ImgGen.CONFIG;
@@ -64,7 +84,7 @@ public class ImgGenBiomeSource extends BiomeSource {
 
         if (ImgGen.biomeColorConverter == null || isClient) {
             Biome defaultBiome = getDefaultBiome();
-            ImgGen.biomeColorConverter = new BiomeColorConverter(defaultBiome);
+            ImgGen.biomeColorConverter = new BiomeColorConverter(defaultBiome,biomeSampler,biomeRegistry);
             biomeColorConverter = ImgGen.biomeColorConverter;
             registerBiomes();
         } else {
