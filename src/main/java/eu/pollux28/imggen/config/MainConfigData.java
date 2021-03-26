@@ -13,10 +13,12 @@ public class MainConfigData {
     public String imageName = "worldImage.png";
     public double scale = 4;
     public boolean customHeightMap = false;
-    public String HeightMapName = "HeightMap.png";
+    public String heightMapName = "HeightMap.png";
     public String defaultBiome = "minecraft:ocean";
     public boolean continuousGen = true;
     public boolean largeBiomes = false;
+    public boolean repeatImage = false;
+    public boolean repeatMirrorImage = false;
     public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
     public boolean placeVanillaStructures = true;
     public boolean customStructures = false;
