@@ -15,7 +15,7 @@ public class HeightMapColorConverter implements ColorConverter{
     }
 
     @Override
-    public Integer GetDefaultValue() {
+    public Integer GetDefaultValue(int biomeX,int biomeZ) {
         return defaultHeight;
     }
 }

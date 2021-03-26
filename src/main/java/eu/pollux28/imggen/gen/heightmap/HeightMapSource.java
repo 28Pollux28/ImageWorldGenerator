@@ -2,12 +2,10 @@ package eu.pollux28.imggen.gen.heightmap;
 
 import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.MainConfigData;
-import eu.pollux28.imggen.data.BiomeColorConverter;
 import eu.pollux28.imggen.data.HeightMapColorConverter;
 import eu.pollux28.imggen.data.ImageDataProvider;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.world.biome.Biome;
 import org.apache.logging.log4j.Level;
 
 import javax.imageio.ImageIO;
@@ -34,7 +32,7 @@ public class HeightMapSource {
             heightMapColorConverter = ImgGen.heightMapColorConverter;
         }
         if (ImgGen.heightMapDataProvider == null || isClient) {
-            BufferedImage image = loadImage(config.HeightMapName);
+            BufferedImage image = loadImage(config.heightMapName);
             ImgGen.heightMapDataProvider = new ImageDataProvider<>(ImgGen.heightMapColorConverter, image, config.scale);
 
         }
@@ -58,6 +56,7 @@ public class HeightMapSource {
     public int getHeight(int x, int z){
         return heightMapDataProvider.GetData(x,z);
     }
+    public boolean isInImage(int x,int z){ return heightMapDataProvider.isInImage(x,z);}
 
 
 }

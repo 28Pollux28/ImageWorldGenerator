@@ -9,7 +9,10 @@
     "MixinAbstractPiglinEntity",
     "MixinAbstractPiglinEntityInvoker",
     "MixinHoglinEntity",
-    "MixinHoglinEntityInvoker"
+    "MixinHoglinEntityInvoker",
+    "MixinNetherForestSurfaceBuilder",
+    "MixinNetherSurfaceBuilder",
+    "MixinValleySurfaceBuilder"
   ],
   "injectors": {
     "defaultRequire": 1
