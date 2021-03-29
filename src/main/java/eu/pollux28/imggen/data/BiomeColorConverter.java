@@ -6,10 +6,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeLayerSampler;
 import org.apache.logging.log4j.Level;
 
-import javax.management.openmbean.KeyAlreadyExistsException;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

@@ -33,13 +33,6 @@ public class StructuresSource {
     private final Int2ObjectOpenHashMap<ConfiguredStructureFeature<?,?>> colorsForStructure = new Int2ObjectOpenHashMap<>();
 
     public StructuresSource(MutableRegistry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures) {
-//        long chunkPosL =new ChunkPos(-6,4).toLong();
-//        String str ="repurposed_structures:grassy_igloo";
-//        ConfiguredStructureFeature<?,?> cfg =configuredStructureFeatures.get(new Identifier(str));
-//        ArrayList<ConfiguredStructureFeature<?,?>> array = new ArrayList<>();
-//        array.add(StructureC.DESERT_PYRAMID.configuredStructureFeature);
-//        array.add(cfg);
-//        this.structuresMap.put(chunkPosL, array);
 
         this.configuredStructureFeatures = configuredStructureFeatures;
         this.image = setImage(ImgGen.CONFIG.customStructuresMap);

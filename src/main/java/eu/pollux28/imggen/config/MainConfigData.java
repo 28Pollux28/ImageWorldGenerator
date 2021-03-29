@@ -11,7 +11,7 @@ import java.util.Objects;
 public class MainConfigData {
     public String configVersion = ImgGen.VERSION;
     public String imageName = "worldImage.png";
-    public double scale = 4;
+    public float scale = 1;
     public boolean customHeightMap = false;
     public String heightMapName = "HeightMap.png";
     public String defaultBiome = "minecraft:ocean";

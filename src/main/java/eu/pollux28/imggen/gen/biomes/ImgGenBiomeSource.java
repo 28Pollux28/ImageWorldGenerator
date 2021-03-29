@@ -21,7 +21,6 @@ import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.layer.BiomeLayers;
 import net.minecraft.world.biome.source.BiomeLayerSampler;
 import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
 import org.apache.logging.log4j.Level;
 
 import javax.imageio.ImageIO;
