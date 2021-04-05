@@ -14,10 +14,10 @@ import static net.minecraft.util.math.MathHelper.square;
 
 public class BiomeColorConverter implements ColorConverter<Biome> {
 
-    private Biome defaultValue;
+    private final Biome defaultValue;
     private final BiomeLayerSampler biomeSampler;
     private final Registry<Biome> biomeRegistry;
-    private Map<Integer, Biome> biomeColorMap;
+    private final Map<Integer, Biome> biomeColorMap;
 
     public BiomeColorConverter(Biome defaultValue, BiomeLayerSampler biomeSampler, Registry<Biome>biomeRegistry){
         this.defaultValue = defaultValue;
@@ -29,9 +29,9 @@ public class BiomeColorConverter implements ColorConverter<Biome> {
 
     @Override
     public Biome GetValue(int color) {
-        int finalColor = color = color&0xFFFFFF;
+        int finalColor = color = color&0x00FFFFFF;
 
-        Biome biome = biomeColorMap.get(color);
+        Biome biome = biomeColorMap.get(finalColor);
 
         if (biome != null){
             return biome;
@@ -41,7 +41,7 @@ public class BiomeColorConverter implements ColorConverter<Biome> {
                 (bt1) -> getColorDiff(finalColor, bt1.getKey()))).get().getValue();
 
         ImgGen.logger.log(Level.DEBUG, "Found unmapped color code " + Integer.toHexString(color) + "! Mapping it to similar color!");
-        RegisterBiome(color, biome);
+        RegisterBiome(finalColor, biome);
 
         return biome;
     }

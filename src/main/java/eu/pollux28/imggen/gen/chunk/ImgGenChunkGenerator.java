@@ -45,6 +45,7 @@ import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeatures;
 import net.minecraft.world.gen.feature.FeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.world.gen.surfacebuilder.ConfiguredSurfaceBuilders;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -133,13 +134,15 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
             this.islandNoise = null;
         }
         this.structuresConfig = supplier.get().getStructuresConfig();
+        int seaLevel1 = settings.get().getSeaLevel();
         ImgGen.refreshConfig();
         if(ImgGen.CONFIG.customHeightMap) {
+            seaLevel1 = ImgGen.CONFIG.seaLevel;
             if (this.heightMapSource == null) {
-                this.heightMapSource = new HeightMapSource(63);
+                this.heightMapSource = new HeightMapSource(seaLevel1);
             }
         }
-        this.seaLevel = settings.get().getSeaLevel();
+        this.seaLevel = seaLevel1;
     }
 
 
@@ -307,7 +310,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     public int getHeight(int x, int z, Heightmap.Type heightmapType) {
         if(ImgGen.CONFIG.customHeightMap){
             if(heightMapSource.heightMapDataProvider.isInImage(x,z)||ImgGen.CONFIG.repeatImage){
-                return this.heightMapSource.getHeight(x,z);
+                return this.heightMapSource.getHeight(x,z)+1;
             }
         }
         return this.sampleHeightmap(x, z, null, heightmapType.getBlockPredicate());
@@ -437,10 +440,12 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                         }
                     }
                 } while(!bl2);
-
-                for(o = 4; o >= 0; --o) {
-                    if (o <= random.nextInt(5)) {
-                        chunk.setBlockState(mutable.set(blockPos.getX(), k + o, blockPos.getZ()), Blocks.BEDROCK.getDefaultState(), false);
+                Biome biome2 = this.biomeSource.getBiomeForNoiseGen(blockPos.getX()>>2,0, blockPos.getZ()>>2);
+                if(biome2.getGenerationSettings().getSurfaceBuilder().get().surfaceBuilder != ConfiguredSurfaceBuilders.NOPE.surfaceBuilder){
+                    for(o = 4; o >= 0; --o) {
+                        if (o <= random.nextInt(5)) {
+                            chunk.setBlockState(mutable.set(blockPos.getX(), k + o, blockPos.getZ()), Blocks.BEDROCK.getDefaultState(), false);
+                        }
                     }
                 }
             }
@@ -515,6 +520,8 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         BlockPos.Mutable mutable = new BlockPos.Mutable();
         ObjectListIterator<StructurePiece> objectListIterator = objectList.iterator();
         ObjectListIterator<JigsawJunction> objectListIterator2 = objectList2.iterator();
+        int n1 =objectList.size();
+        int n2 = objectList2.size();
 
         for(int n = 0; n < this.noiseSizeX; ++n) {
             int p;
@@ -577,7 +584,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                     ar = Math.max(0, Math.max(blockBox.minZ - ak, ak - blockBox.maxZ));
                                 }
 
-                                objectListIterator.back(objectList.size());
+                                objectListIterator.back(n1);
 
                                 while(objectListIterator2.hasNext()) {
                                     JigsawJunction jigsawJunction = objectListIterator2.next();
@@ -587,21 +594,34 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                     ao += getNoiseWeight(as, at, au) * 0.4D;
                                 }
 
-                                objectListIterator2.back(objectList2.size());
+                                objectListIterator2.back(n2);
                                 BlockState blockState = this.getBlockState(ao, v);
-                                Biome biome2 = biomeT[af][al];/*biomeSource.getBiomeForNoiseGen((k+af)>>2, w>>2,(l+al)>>2);*/
+                                Biome biome2 = biomeT[af][al];
                                 Biome.Category cat = biome2.getCategory();
                                 if(ImgGen.CONFIG.customHeightMap) {
                                     if(this.heightMapSource.heightMapDataProvider.isInImage(ae,ak)||ImgGen.CONFIG.repeatImage){
-                                        int height = heightT[af][al]; //heightMapSource.getHeight(ae, ak);//chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, (k+af), (l+al));
-                                        if (v > height) {
-                                            blockState = AIR;
-                                        } else if (cat == Biome.Category.OCEAN && blockState == AIR) {
-                                            blockState = this.defaultFluid;
-                                        } else if (cat != Biome.Category.OCEAN && blockState == defaultFluid) {
-                                            blockState = defaultBlock;
-                                        } else if (blockState == AIR) {
-                                            blockState = this.defaultBlock;
+                                        int height = heightT[af][al];
+                                        if(cat == Biome.Category.OCEAN){
+                                            if(height>this.seaLevel){
+                                                blockState=this.defaultBlock;
+                                                if(v>height){
+                                                    blockState = AIR;
+                                                }
+                                            }else{
+                                                if(v>seaLevel){
+                                                    blockState=AIR;
+                                                }else if(v<=height){
+                                                    blockState=defaultBlock;
+                                                }else{
+                                                    blockState= defaultFluid;
+                                                }
+                                            }
+                                        }else{
+                                            if(v>height){
+                                                blockState= AIR;
+                                            }else{
+                                                blockState=this.defaultBlock;
+                                            }
                                         }
                                     }
                                 }
@@ -621,6 +641,8 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                         if(blockState==defaultBlock){
                                             blockState= END_STONE;
                                         }
+                                    }else if(biome2.getGenerationSettings().getSurfaceBuilder().get().surfaceBuilder == ConfiguredSurfaceBuilders.NOPE.surfaceBuilder){
+                                        blockState = Blocks.VOID_AIR.getDefaultState();
                                     }
                                     chunkSection.setBlockState(af, w, al, blockState, false);
                                     heightmap.trackUpdate(af, v, al, blockState);
@@ -786,7 +808,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                 long p = ChunkPos.toLong(n, o);
 
                 for (StructureStart<?> start : structureWorldAccess.getChunk(n, o).getStructureStarts().values()) {
-                    StructureStart structureStart = (StructureStart) start;
+                    StructureStart structureStart = start;
 
                     try {
                         if (structureStart != StructureStart.DEFAULT && structureStart.getBoundingBox().intersectsXZ(l, m, l + 15, m + 15)) {

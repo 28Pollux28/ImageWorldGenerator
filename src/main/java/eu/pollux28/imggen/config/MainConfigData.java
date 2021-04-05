@@ -14,6 +14,7 @@ public class MainConfigData {
     public float scale = 1;
     public boolean customHeightMap = false;
     public String heightMapName = "HeightMap.png";
+    public int seaLevel = 63;
     public String defaultBiome = "minecraft:ocean";
     public boolean continuousGen = true;
     public boolean largeBiomes = false;

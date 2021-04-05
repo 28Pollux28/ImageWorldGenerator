@@ -56,7 +56,7 @@ public enum BiomeColors{
     Deep_Lukewarm_Ocean(0x000040,BiomeKeys.DEEP_LUKEWARM_OCEAN),
     Deep_Cold_Ocean(0x202038,BiomeKeys.DEEP_COLD_OCEAN),
     Deep_Frozen_Ocean(0x404090, BiomeKeys.DEEP_FROZEN_OCEAN),
-    The_Void(0x000000,BiomeKeys.THE_END),
+    The_Void(0x000000,BiomeKeys.THE_VOID),
     Sunflower_Plains(0xB5DB88,BiomeKeys.SUNFLOWER_PLAINS),
     Desert_Lakes(0xFFBC40,BiomeKeys.DESERT_LAKES),
     Gravelly_Mountains(0x888888,BiomeKeys.GRAVELLY_MOUNTAINS),

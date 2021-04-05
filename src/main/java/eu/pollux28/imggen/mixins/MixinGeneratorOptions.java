@@ -34,7 +34,7 @@ public class MixinGeneratorOptions {
             return;
         }
 
-        if (properties.get("level-type").toString().trim().toLowerCase().equals("imggen")) {
+        if (properties.get("level-type").toString().trim().equalsIgnoreCase("imggen")) {
 
             String seed = (String) MoreObjects.firstNonNull(properties.get("level-seed"), "");
             long l = new Random().nextLong();

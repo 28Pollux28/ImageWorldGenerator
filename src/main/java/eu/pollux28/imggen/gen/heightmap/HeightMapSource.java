@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class HeightMapSource {
-    private HeightMapColorConverter heightMapColorConverter;
+    private final HeightMapColorConverter heightMapColorConverter;
     public final ImageDataProvider<Integer> heightMapDataProvider;
 
     public HeightMapSource(int seaLevel) {
