@@ -1,5 +1,6 @@
 package eu.pollux28.imggen;
 
+import eu.pollux28.imggen.command.Commands;
 import eu.pollux28.imggen.config.Config;
 import eu.pollux28.imggen.config.ConfigUtil;
 import eu.pollux28.imggen.config.MainConfigData;
@@ -40,6 +41,7 @@ public class ImgGen implements ModInitializer {
         if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
             imgGenType = new ImgGenType("imggen");
         }
+        Commands.init();
         Path genMapDir = Paths.get("", "imggen", "image");
         if (!Files.isDirectory(genMapDir)) {
             genMapDir.toFile().mkdirs();
