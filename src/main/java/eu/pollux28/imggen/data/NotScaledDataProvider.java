@@ -4,10 +4,10 @@ import eu.pollux28.imggen.ImgGen;
 
 import java.awt.image.BufferedImage;
 
-public final class ImageDataProvider<T> {
+public final class NotScaledDataProvider<T> {
     private final ColorConverter<T> colorConverter;
     private final BufferedImage image;
-    private final double scale;
+    private final float scale;
     private final int width;
     private final int height;
     private final int width12;
@@ -15,7 +15,7 @@ public final class ImageDataProvider<T> {
     private final int width2;
     private final int height2;
 
-    public ImageDataProvider(ColorConverter<T> colorConverter, BufferedImage image, double scale){
+    public NotScaledDataProvider(ColorConverter<T> colorConverter, BufferedImage image, float scale){
         this.colorConverter = colorConverter;
         this.image = image;
         this.scale = scale;
@@ -33,8 +33,8 @@ public final class ImageDataProvider<T> {
         height2 = height*2;
     }
     public boolean isInImage(int x, int y){
-        int centeredX = (int)(x / (scale)) + width12;
-        int centeredY = (int)(y / (scale)) + height12;
+        int centeredX = x + width12;
+        int centeredY = y + height12;
 
         return !(centeredX < 0         || centeredY < 0 ||
                 centeredX > width - 1 || centeredY > height - 1 ||
@@ -43,15 +43,15 @@ public final class ImageDataProvider<T> {
     }
 
     public T GetData(int x, int y){
-        int centeredX = (int)(x / (scale)) + width12;
-        int centeredY = (int)(y / (scale)) + height12;
+        int centeredX = x + width12;
+        int centeredY = y + height12;
         if (!isInImage(x,y)){
             if(!ImgGen.CONFIG.repeatImage ||image==null){
                 return colorConverter.GetDefaultValue(centeredX,centeredY);
-            }else{
+            }else {
                 if(!ImgGen.CONFIG.repeatMirrorImage){
-                    centeredX = centeredX>=0 ? centeredX%width:-((centeredX+1)%width);
-                    centeredY = centeredY>=0 ? centeredY%height:-((centeredY+1)%height);
+                    centeredX = centeredX>=0 ? centeredX%width:((centeredX+1)%width);
+                    centeredY = centeredY>=0 ? centeredY%height:((centeredY+1)%height);
                 }else{
                     int modWidth = centeredX%(width2);
                     int modHeight = centeredY%(height2);

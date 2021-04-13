@@ -8,7 +8,7 @@ import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.data.BiomeColorConverter;
 import eu.pollux28.imggen.data.BiomeColors;
-import eu.pollux28.imggen.data.ImageDataProvider;
+import eu.pollux28.imggen.data.ScaledDataProvider;
 import eu.pollux28.imggen.util.BiomeIDAndRGBPair;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
@@ -62,7 +62,7 @@ public class ImgGenBiomeSource extends BiomeSource {
     private final Registry<Biome> biomeRegistry;
 
     private final BiomeColorConverter biomeColorConverter;
-    private final ImageDataProvider<Biome> biomeDataProvider;
+    private final ScaledDataProvider<Biome> biomeDataProvider;
     private final BiomeLayerSampler biomeSampler;
     private final boolean legacyBiomeInitLayer;
     private final boolean largeBiomes;
@@ -91,7 +91,7 @@ public class ImgGenBiomeSource extends BiomeSource {
         }
         if (ImgGen.biomeDataProvider == null || isClient) {
             BufferedImage image = loadImage(config.imageName);
-            ImgGen.biomeDataProvider = new ImageDataProvider<>(ImgGen.biomeColorConverter, image, config.scale);
+            ImgGen.biomeDataProvider = new ScaledDataProvider<>(ImgGen.biomeColorConverter, image, config.imageScale);
 
         }
 

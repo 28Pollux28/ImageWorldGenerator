@@ -11,16 +11,17 @@ import java.util.Objects;
 public class MainConfigData {
     public String configVersion = ImgGen.VERSION;
     public String imageName = "worldImage.png";
-    public float scale = 1;
+    public float imageScale = 1;
+    public float heightMapScale = 1;
     public boolean customHeightMap = false;
     public String heightMapName = "HeightMap.png";
     public int seaLevel = 63;
     public String defaultBiome = "minecraft:ocean";
     public boolean continuousGen = true;
     public boolean largeBiomes = false;
+    public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
     public boolean repeatImage = false;
     public boolean repeatMirrorImage = false;
-    public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
     public boolean placeVanillaStructures = true;
     public boolean customStructures = false;
     public String customStructuresMap = "structureMap.png";
@@ -33,7 +34,7 @@ public class MainConfigData {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MainConfigData that = (MainConfigData) o;
-        return Double.compare(that.scale, scale) == 0 &&
+        return Double.compare(that.imageScale, imageScale) == 0 &&
                 Float.compare(that.lakeFormationPercentChance, lakeFormationPercentChance) == 0 &&
                 configVersion.equals(that.configVersion) &&
                 imageName.equals(that.imageName) &&
@@ -44,6 +45,6 @@ public class MainConfigData {
 
     @Override
     public int hashCode() {
-        return Objects.hash(configVersion, imageName, defaultBiome, scale, customBiomes, lakeFormationPercentChance);
+        return Objects.hash(configVersion, imageName, defaultBiome, imageScale, customBiomes, lakeFormationPercentChance);
     }
 }

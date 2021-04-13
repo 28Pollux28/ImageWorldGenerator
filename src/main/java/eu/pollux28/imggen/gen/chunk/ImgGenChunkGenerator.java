@@ -28,6 +28,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.*;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.GenerationSettings;
 import net.minecraft.world.biome.SpawnSettings;
 import net.minecraft.world.biome.source.BiomeAccess;
@@ -96,7 +97,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     private final int worldHeight;
     private final StructuresConfig structuresConfig;
     private StructuresSource structuresSource = null;
-    private HeightMapSource heightMapSource = null;
+    public HeightMapSource heightMapSource = null;
     private final int seaLevel;
 
     public ImgGenChunkGenerator(BiomeSource biomeSource, long worldSeed, Supplier<ChunkGeneratorSettings> supplier) {
@@ -404,7 +405,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                 }else if(cat == Biome.Category.THEEND){
                     blockState = END_STONE;
                 }
-                biome.buildSurface(chunkRandom, chunk, o, p, q, e, blockState, blockStateF, z, region.getSeed());
+                biome.buildSurface(chunkRandom, chunk, o, p, q, e, blockState, blockStateF, seaLevel, region.getSeed());
 
             }
         }
@@ -467,7 +468,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                 if(ImgGen.CONFIG.customHeightMap){
                     heightT[ix][iz] = heightMapSource.getHeight(k+ix,l+iz);
                 }
-                biomeT[ix][iz] = this.biomeSource.getBiomeForNoiseGen((k+ix)>>2,80,(l+iz)>>2);
+                biomeT[ix][iz] = this.biomeSource.getBiomeForNoiseGen((k>>2)+(ix>>2),80,(l>>2)+(iz>>2));
             }
         }
         for (StructureFeature<?> feature : StructureFeature.JIGSAW_STRUCTURES) {
@@ -601,26 +602,18 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                 if(ImgGen.CONFIG.customHeightMap) {
                                     if(this.heightMapSource.heightMapDataProvider.isInImage(ae,ak)||ImgGen.CONFIG.repeatImage){
                                         int height = heightT[af][al];
-                                        if(cat == Biome.Category.OCEAN){
-                                            if(height>this.seaLevel){
-                                                blockState=this.defaultBlock;
-                                                if(v>height){
-                                                    blockState = AIR;
-                                                }
-                                            }else{
-                                                if(v>seaLevel){
-                                                    blockState=AIR;
-                                                }else if(v<=height){
-                                                    blockState=defaultBlock;
-                                                }else{
-                                                    blockState= defaultFluid;
-                                                }
+                                        if(height>this.seaLevel){
+                                            blockState=this.defaultBlock;
+                                            if(v>height){
+                                                blockState = AIR;
                                             }
                                         }else{
-                                            if(v>height){
-                                                blockState= AIR;
+                                            if(v>seaLevel){
+                                                blockState=AIR;
+                                            }else if(v<=height){
+                                                blockState=defaultBlock;
                                             }else{
-                                                blockState=this.defaultBlock;
+                                                blockState= defaultFluid;
                                             }
                                         }
                                     }
@@ -635,13 +628,13 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                         if(blockState==defaultFluid){
                                             blockState = LAVA;
                                         }else{
-                                        blockState = NETHERRACK;
+                                            blockState = NETHERRACK;
                                         }
                                     }else if(cat== Biome.Category.THEEND){
                                         if(blockState==defaultBlock){
                                             blockState= END_STONE;
                                         }
-                                    }else if(biome2.getGenerationSettings().getSurfaceBuilder().get().surfaceBuilder == ConfiguredSurfaceBuilders.NOPE.surfaceBuilder){
+                                    }else if(world.getRegistryManager().get(Registry.BIOME_KEY).getId(biome2) == BiomeKeys.THE_VOID.getValue()){
                                         blockState = Blocks.VOID_AIR.getDefaultState();
                                     }
                                     chunkSection.setBlockState(af, w, al, blockState, false);

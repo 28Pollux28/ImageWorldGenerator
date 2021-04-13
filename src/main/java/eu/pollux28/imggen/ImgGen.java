@@ -6,7 +6,8 @@ import eu.pollux28.imggen.config.ConfigUtil;
 import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.data.BiomeColorConverter;
 import eu.pollux28.imggen.data.HeightMapColorConverter;
-import eu.pollux28.imggen.data.ImageDataProvider;
+import eu.pollux28.imggen.data.NotScaledDataProvider;
+import eu.pollux28.imggen.data.ScaledDataProvider;
 import eu.pollux28.imggen.gen.ImgGenType;
 import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
@@ -16,6 +17,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,14 +26,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ImgGen implements ModInitializer {
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.1.1-beta.0";
     public static final Logger logger = LogManager.getLogger();
     public static MainConfigData CONFIG;
-
     public static BiomeColorConverter biomeColorConverter;
-    public static ImageDataProvider<Biome> biomeDataProvider;
+    public static ScaledDataProvider<Biome> biomeDataProvider;
     public static HeightMapColorConverter heightMapColorConverter;
-    public static ImageDataProvider<Integer> heightMapDataProvider;
+    public static NotScaledDataProvider<Integer> heightMapDataProvider;
 
     private ImgGenType imgGenType;
 
@@ -44,7 +45,10 @@ public class ImgGen implements ModInitializer {
         Commands.init();
         Path genMapDir = Paths.get("", "imggen", "image");
         if (!Files.isDirectory(genMapDir)) {
-            genMapDir.toFile().mkdirs();
+            boolean dir = genMapDir.toFile().mkdirs();
+            if(!dir){
+                logger.log(Level.FATAL,"Could not create folder imggen/image !");
+            }
         }
         Config.init();
         Registry.register(Registry.BIOME_SOURCE, new Identifier("imggen:imggen"), ImgGenBiomeSource.CODEC);

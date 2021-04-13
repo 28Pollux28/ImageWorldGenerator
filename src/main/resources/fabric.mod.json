@@ -57,5 +57,5 @@
   "suggests": {
     "flamingo": "*"
   },
-  "version": "1.1.1"
+  "version": "${version}"
 }
