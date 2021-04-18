@@ -7,7 +7,6 @@ import java.awt.image.BufferedImage;
 public final class NotScaledDataProvider<T> {
     private final ColorConverter<T> colorConverter;
     private final BufferedImage image;
-    private final float scale;
     private final int width;
     private final int height;
     private final int width12;
@@ -15,10 +14,9 @@ public final class NotScaledDataProvider<T> {
     private final int width2;
     private final int height2;
 
-    public NotScaledDataProvider(ColorConverter<T> colorConverter, BufferedImage image, float scale){
+    public NotScaledDataProvider(ColorConverter<T> colorConverter, BufferedImage image){
         this.colorConverter = colorConverter;
         this.image = image;
-        this.scale = scale;
 
         if (image != null){
             width = image.getWidth();

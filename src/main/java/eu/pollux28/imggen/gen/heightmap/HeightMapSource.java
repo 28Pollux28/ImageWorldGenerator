@@ -36,7 +36,7 @@ public class HeightMapSource {
             if(config.heightMapScale != 1){
                 image = transformImage(image);
             }
-            ImgGen.heightMapDataProvider = new NotScaledDataProvider<Integer>(ImgGen.heightMapColorConverter, image, config.heightMapScale);
+            ImgGen.heightMapDataProvider = new NotScaledDataProvider<Integer>(ImgGen.heightMapColorConverter, image);
 
         }
 

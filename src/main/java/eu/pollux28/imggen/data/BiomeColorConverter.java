@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static net.minecraft.util.math.MathHelper.square;
 
 public class BiomeColorConverter implements ColorConverter<Biome> {
 
@@ -64,7 +63,10 @@ public class BiomeColorConverter implements ColorConverter<Biome> {
         biomeColorMap.put(color, biome);
     }
 
-    private static double getColorDiff(int RGB, int btRGB){
+    private double getColorDiff(int RGB, int btRGB){
         return square(((RGB)%256)-((btRGB)%256)) + square(((RGB>>8)%256)-((btRGB>>8)%256)) + square(((RGB>>16)%256)-((btRGB>>16)%256));
+    }
+    private float square(float f){
+        return f*f;
     }
 }

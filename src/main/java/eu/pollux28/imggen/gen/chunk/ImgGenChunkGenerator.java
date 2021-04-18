@@ -311,7 +311,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     public int getHeight(int x, int z, Heightmap.Type heightmapType) {
         if(ImgGen.CONFIG.customHeightMap){
             if(heightMapSource.heightMapDataProvider.isInImage(x,z)||ImgGen.CONFIG.repeatImage){
-                return this.heightMapSource.getHeight(x,z)+1;
+                int height = this.heightMapSource.getHeight(x,z)+1;
+                if(heightmapType== Heightmap.Type.WORLD_SURFACE_WG){
+                    return Math.max(height, seaLevel+1);
+                }
+                return height;
             }
         }
         return this.sampleHeightmap(x, z, null, heightmapType.getBlockPredicate());
