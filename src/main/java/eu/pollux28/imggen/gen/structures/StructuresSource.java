@@ -2,9 +2,9 @@ package eu.pollux28.imggen.gen.structures;
 
 import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.MainConfigData;
-import eu.pollux28.imggen.data.NotScaledDataProvider;
 import eu.pollux28.imggen.data.StructureColorConverter;
 import eu.pollux28.imggen.data.StructureColors;
+import eu.pollux28.imggen.data.StructureDataProvider;
 import eu.pollux28.imggen.util.StructureAndRGBPair;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
@@ -29,7 +29,7 @@ public class StructuresSource {
 
     public HashSet<StructureFeature> configuredStructureFeaturesBlackList = new HashSet<>();
     private final StructureColorConverter structureColorConverter;
-    private final NotScaledDataProvider<ConfiguredStructureFeature> structureDataProvider;
+    private final StructureDataProvider structureDataProvider;
 
     public StructuresSource(MutableRegistry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures) {
         this.configuredStructureFeatures = configuredStructureFeatures;
@@ -45,8 +45,8 @@ public class StructuresSource {
             registerStructures();
 
             if (ImgGen.structureDataProvider == null || isClient) {
-                BufferedImage image = loadImage(config.customStructuresMap);
-                ImgGen.structureDataProvider = new NotScaledDataProvider<>(ImgGen.structureColorConverter, image);
+                BufferedImage image = loadImage(config.customStructuresImage);
+                ImgGen.structureDataProvider = new StructureDataProvider(ImgGen.structureColorConverter, image);
 
             }
             structureDataProvider = ImgGen.structureDataProvider;
@@ -119,7 +119,6 @@ public class StructuresSource {
         }
     }
 
-
     public ArrayList<?> getStructuresInPos(ChunkPos chunkPos){
         ArrayList<ConfiguredStructureFeature> structureArray = new ArrayList<>();
         for(int x = chunkPos.getStartX();x<= chunkPos.getEndX();x++){
@@ -131,8 +130,6 @@ public class StructuresSource {
         return structureArray;
     }
 
-
-
     public ConfiguredStructureFeature<?, ?> getStructureByID(Identifier structureID){
         return configuredStructureFeatures.get(structureID);
     }
@@ -142,21 +139,5 @@ public class StructuresSource {
             return null;
         }else return new Identifier(str[0],str[1]);
     }
-
-
-//    private void addValues(long pos, ConfiguredStructureFeature<?,?> configuredStructureFeature) {
-//        ArrayList<ConfiguredStructureFeature<?,?>> tempList;
-//        if (structuresMap.containsKey(pos)) {
-//            tempList = (ArrayList<ConfiguredStructureFeature<?, ?>>) structuresMap.get(pos);
-//            if(tempList == null)
-//                tempList = new ArrayList<>();
-//        } else {
-//            tempList = new ArrayList<>();
-//        }
-//        tempList.add(configuredStructureFeature);
-//        structuresMap.put(pos,tempList);
-//    }
-
-
 
 }

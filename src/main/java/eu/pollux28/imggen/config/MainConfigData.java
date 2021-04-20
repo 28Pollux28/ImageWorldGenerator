@@ -10,25 +10,30 @@ import java.util.Objects;
 
 public class MainConfigData {
     public String configVersion = ImgGen.VERSION;
-    public String imageName = "worldImage.png";
-    public float imageScale = 1;
-    public float heightMapScale = 1;
-    public boolean customHeightMap = false;
-    public String heightMapName = "HeightMap.png";
-    public int seaLevel = 63;
+    public String biomesImageName = "biomeImage.png";
+    public float biomesImageScale = 1;
+    public boolean repeatBiomeImage = false;
+    public boolean repeatMirrorBiomeImage = false;
     public String defaultBiome = "minecraft:ocean";
     public boolean continuousGen = true;
     public boolean largeBiomes = false;
     public List<BiomeIDAndRGBPair> customBiomes = Arrays.asList(new BiomeIDAndRGBPair("modid:biomeid","0x000000"),new BiomeIDAndRGBPair("modid:biomeid","0xFFFFFF"));
-    public boolean repeatImage = false;
-    public boolean repeatMirrorImage = false;
+    public boolean customHeightMap = false;
+    public String heightMapName = "HeightMap.png";
+    public float heightMapScale = 1;
+    public boolean repeatHeightMapImage = false;
+    public boolean repeatMirrorHeightMapImage = false;
+    public int seaLevel = 63;
     public boolean placeVanillaStructures = true;
     public boolean customStructures = false;
-    public String customStructuresMap = "structureMap.png";
+    public String customStructuresImage = "structureMap.png";
+    public boolean repeatStructureImage= false;
+    public boolean repeatMirrorStructureImage = false;
     public boolean useBlackList = false;
     public String[] structureBlacklist = {"modid:structureid","modid:structureid"};
     public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("modid:structureid","0x123456"), new StructureAndRGBPair("modid:structureid","0x024680"));
     public float lakeFormationPercentChance = 0.5f;
+
 
 
     @Override
@@ -36,10 +41,10 @@ public class MainConfigData {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MainConfigData that = (MainConfigData) o;
-        return Double.compare(that.imageScale, imageScale) == 0 &&
+        return Double.compare(that.biomesImageScale, biomesImageScale) == 0 &&
                 Float.compare(that.lakeFormationPercentChance, lakeFormationPercentChance) == 0 &&
                 configVersion.equals(that.configVersion) &&
-                imageName.equals(that.imageName) &&
+                biomesImageName.equals(that.biomesImageName) &&
                 (defaultBiome.equals(that.defaultBiome)) &&
                 customBiomes== that.customBiomes;
 
@@ -47,6 +52,6 @@ public class MainConfigData {
 
     @Override
     public int hashCode() {
-        return Objects.hash(configVersion, imageName, defaultBiome, imageScale, customBiomes, lakeFormationPercentChance);
+        return Objects.hash(configVersion, biomesImageName, defaultBiome, biomesImageScale, customBiomes, lakeFormationPercentChance);
     }
 }

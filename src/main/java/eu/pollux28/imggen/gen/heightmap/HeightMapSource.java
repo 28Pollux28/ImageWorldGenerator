@@ -3,7 +3,7 @@ package eu.pollux28.imggen.gen.heightmap;
 import eu.pollux28.imggen.ImgGen;
 import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.data.HeightMapColorConverter;
-import eu.pollux28.imggen.data.NotScaledDataProvider;
+import eu.pollux28.imggen.data.HeightDataProvider;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import org.apache.logging.log4j.Level;
@@ -18,7 +18,7 @@ import java.nio.file.Paths;
 
 public class HeightMapSource {
     private final HeightMapColorConverter heightMapColorConverter;
-    public final NotScaledDataProvider<Integer> heightMapDataProvider;
+    public final HeightDataProvider heightMapDataProvider;
 
     public HeightMapSource(int seaLevel) {
         ImgGen.refreshConfig();
@@ -36,7 +36,7 @@ public class HeightMapSource {
             if(config.heightMapScale != 1){
                 image = transformImage(image);
             }
-            ImgGen.heightMapDataProvider = new NotScaledDataProvider<Integer>(ImgGen.heightMapColorConverter, image);
+            ImgGen.heightMapDataProvider = new HeightDataProvider(ImgGen.heightMapColorConverter, image);
 
         }
 

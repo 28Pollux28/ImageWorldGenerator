@@ -310,7 +310,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
 
     public int getHeight(int x, int z, Heightmap.Type heightmapType) {
         if(ImgGen.CONFIG.customHeightMap){
-            if(heightMapSource.heightMapDataProvider.isInImage(x,z)||ImgGen.CONFIG.repeatImage){
+            if(heightMapSource.heightMapDataProvider.isInImage(x,z)||ImgGen.CONFIG.repeatHeightMapImage){
                 int height = this.heightMapSource.getHeight(x,z)+1;
                 if(heightmapType== Heightmap.Type.WORLD_SURFACE_WG){
                     return Math.max(height, seaLevel+1);
@@ -395,7 +395,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                 int p = l + n;
                 int q = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, m, n) + 1;
                 int z = this.seaLevel;
-                if(ImgGen.CONFIG.customHeightMap&&heightMapSource.heightMapDataProvider.isInImage(o,p)||ImgGen.CONFIG.repeatImage){
+                if(ImgGen.CONFIG.customHeightMap&&heightMapSource.heightMapDataProvider.isInImage(o,p)||ImgGen.CONFIG.repeatHeightMapImage){
                     z = heightMapSource.getHeight(o,p)+1;
                 }
                 double e = this.surfaceDepthNoise.sample((double)o * 0.0625D, (double)p * 0.0625D, 0.0625D, (double)m * 0.0625D) * 15.0D;
@@ -604,7 +604,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                 Biome biome2 = biomeT[af][al];
                                 Biome.Category cat = biome2.getCategory();
                                 if(ImgGen.CONFIG.customHeightMap) {
-                                    if(this.heightMapSource.heightMapDataProvider.isInImage(ae,ak)||ImgGen.CONFIG.repeatImage){
+                                    if(this.heightMapSource.heightMapDataProvider.isInImage(ae,ak)||ImgGen.CONFIG.repeatHeightMapImage){
                                         int height = heightT[af][al];
                                         if(height>this.seaLevel){
                                             blockState=this.defaultBlock;
@@ -679,7 +679,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                     chunkRandom.setCarverSeed(seed + (long)n, l, m);
                     if (configuredCarver.shouldCarve(chunkRandom, l, m)) {
                         if(ImgGen.CONFIG.customHeightMap){
-                            if(heightMapSource.heightMapDataProvider.isInImage(j*16+l,k*16+m)||ImgGen.CONFIG.repeatImage){
+                            if(heightMapSource.heightMapDataProvider.isInImage(j*16+l,k*16+m)||ImgGen.CONFIG.repeatHeightMapImage){
                                 configuredCarver.carve(chunk, biomeAccess::getBiome, chunkRandom, chunk.getHighestNonEmptySectionYOffset()-16, l, m, j, k, bitSet);
                                 continue;
                             }

@@ -1,11 +1,12 @@
 package eu.pollux28.imggen.data;
 
 import eu.pollux28.imggen.ImgGen;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 
 import java.awt.image.BufferedImage;
 
-public final class NotScaledDataProvider<T> {
-    private final ColorConverter<T> colorConverter;
+public final class StructureDataProvider {
+    private final ColorConverter<ConfiguredStructureFeature> colorConverter;
     private final BufferedImage image;
     private final int width;
     private final int height;
@@ -14,7 +15,7 @@ public final class NotScaledDataProvider<T> {
     private final int width2;
     private final int height2;
 
-    public NotScaledDataProvider(ColorConverter<T> colorConverter, BufferedImage image){
+    public StructureDataProvider(ColorConverter<ConfiguredStructureFeature> colorConverter, BufferedImage image){
         this.colorConverter = colorConverter;
         this.image = image;
 
@@ -40,25 +41,23 @@ public final class NotScaledDataProvider<T> {
 
     }
 
-    public T GetData(int x, int y){
+    public ConfiguredStructureFeature GetData(int x, int y){
         int centeredX = x + width12;
         int centeredY = y + height12;
         if (!isInImage(x,y)){
-            if(!ImgGen.CONFIG.repeatImage ||image==null){
+            if(!ImgGen.CONFIG.repeatStructureImage ||image==null){
                 return colorConverter.GetDefaultValue(centeredX,centeredY);
             }else {
-                if(!ImgGen.CONFIG.repeatMirrorImage){
-                    centeredX = centeredX>=0 ? centeredX%width:((centeredX+1)%width);
-                    centeredY = centeredY>=0 ? centeredY%height:((centeredY+1)%height);
+                if(!ImgGen.CONFIG.repeatMirrorStructureImage){
+                    centeredX = centeredX>=0 ? centeredX%width:-width*((centeredX+1)/width)+width+centeredX;
+                    centeredY = centeredY>=0 ? centeredY%height:-height*((centeredY+1)/height)+height+centeredY;
                 }else{
-                    int modWidth = centeredX%(width2);
-                    int modHeight = centeredY%(height2);
-                    int modWidthNeg = -((centeredX+1)%width2);
-                    int modHeightNeg = -((centeredY+1)%height2);
-                    centeredX = centeredX>=0 ? modWidth>=width ? width2-1-modWidth:modWidth :
-                            modWidthNeg>=width ? width2-1-modWidthNeg:modWidthNeg;
-                    centeredY = centeredY>=0 ? modHeight>=height ? height2-1-modHeight:modHeight :
-                            modHeightNeg>=height ? height2-1-modHeightNeg:modHeightNeg;
+                    centeredX = centeredX<=0? -centeredX-1 : centeredX;
+                    centeredY = centeredY<=0? -centeredY-1 : centeredY;
+                    int kX = Math.abs(centeredX/(width))+(centeredX>=0?0:1);
+                    int kY = Math.abs(centeredY/(height))+(centeredY>=0?0:1);
+                    centeredX = kX%2==0 ? centeredX%width : width-1-centeredX%width;
+                    centeredY = kY%2==0 ? centeredY%height : height-1-centeredY%height;
                 }
                 int rgb = image.getRGB(centeredX, centeredY);
                 return colorConverter.GetValue(rgb);
