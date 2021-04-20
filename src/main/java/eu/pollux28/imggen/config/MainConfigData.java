@@ -25,7 +25,9 @@ public class MainConfigData {
     public boolean placeVanillaStructures = true;
     public boolean customStructures = false;
     public String customStructuresMap = "structureMap.png";
-    public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("structureid","0x123456"), new StructureAndRGBPair("structureid","0x024680"));
+    public boolean useBlackList = false;
+    public String[] structureBlacklist = {"modid:structureid","modid:structureid"};
+    public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("modid:structureid","0x123456"), new StructureAndRGBPair("modid:structureid","0x024680"));
     public float lakeFormationPercentChance = 0.5f;
 
 

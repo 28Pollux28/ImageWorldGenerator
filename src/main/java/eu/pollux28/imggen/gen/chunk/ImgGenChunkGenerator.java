@@ -754,14 +754,16 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     public void setStructureStarts(DynamicRegistryManager dynamicRegistryManager, StructureAccessor structureAccessor, Chunk chunk, StructureManager structureManager, long worldSeed) {
         ChunkPos chunkPos = chunk.getPos();
         Biome biome = this.biomeSource.getBiomeForNoiseGen((chunkPos.x << 2) + 2, 0, (chunkPos.z << 2) + 2);
-        if(ImgGen.CONFIG.customStructures){
+        if(ImgGen.CONFIG.customStructures||ImgGen.CONFIG.useBlackList){
             if(this.structuresSource == null){
                 this.structuresSource = new StructuresSource(dynamicRegistryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN));
             }
-            for (Object o : structuresSource.getStructuresInPos(chunkPos)) {
-                if(o!=null) {
-                    ConfiguredStructureFeature<?, ?> configuredStructureFeature = (ConfiguredStructureFeature<?, ?>) o;
-                    this.setStructureStart(configuredStructureFeature, dynamicRegistryManager, structureAccessor, chunk, structureManager, worldSeed, chunkPos, biome, true);
+            if(ImgGen.CONFIG.customStructures){
+                for (Object o : structuresSource.getStructuresInPos(chunkPos)) {
+                    if(o!=null) {
+                        ConfiguredStructureFeature<?, ?> configuredStructureFeature = (ConfiguredStructureFeature<?, ?>) o;
+                        this.setStructureStart(configuredStructureFeature, dynamicRegistryManager, structureAccessor, chunk, structureManager, worldSeed, chunkPos, biome, true);
+                    }
                 }
             }
         }
@@ -779,17 +781,24 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         StructureStart<?> structureStart = structureAccessor.getStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, chunk);
         int i = structureStart != null ? structureStart.getReferences() : 0;
         StructureConfig structureConfig = this.structuresConfig.getForType(configuredStructureFeature.feature);
-        if (structureConfig != null) {
-            if(bl){
-                StructureStart<FeatureConfig> structureStart2 = (StructureStart<FeatureConfig>) configuredStructureFeature.feature.createStart(chunkPos.x, chunkPos.z, BlockBox.empty(), i, worldSeed);
-                structureStart2.init(dynamicRegistryManager, this, structureManager, chunkPos.x, chunkPos.z, biome, configuredStructureFeature.config);
-                structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
-            }else{
-                StructureStart<?> structureStart2 = configuredStructureFeature.tryPlaceStart(dynamicRegistryManager, this, this.biomeSource, structureManager, worldSeed, chunkPos, biome, i, structureConfig);
-                structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
+        if(ImgGen.CONFIG.customStructures||ImgGen.CONFIG.useBlackList){
+            if(ImgGen.CONFIG.useBlackList){
+                if(this.structuresSource.configuredStructureFeaturesBlackList.contains(configuredStructureFeature.feature)) return;
             }
+            if (structureConfig != null) {
+                if(bl){
+                    StructureStart<FeatureConfig> structureStart2 = (StructureStart<FeatureConfig>) configuredStructureFeature.feature.createStart(chunkPos.x, chunkPos.z, BlockBox.empty(), i, worldSeed);
+                    structureStart2.init(dynamicRegistryManager, this, structureManager, chunkPos.x, chunkPos.z, biome, configuredStructureFeature.config);
+                    structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
+                }else{
+                    StructureStart<?> structureStart2 = configuredStructureFeature.tryPlaceStart(dynamicRegistryManager, this, this.biomeSource, structureManager, worldSeed, chunkPos, biome, i, structureConfig);
+                    structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
+                }
+            }
+        }else{
+            StructureStart<?> structureStart2 = configuredStructureFeature.tryPlaceStart(dynamicRegistryManager, this, this.biomeSource, structureManager, worldSeed, chunkPos, biome, i, structureConfig);
+            structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
         }
-
     }
 
     public void addStructureReferences(StructureWorldAccess structureWorldAccess, StructureAccessor accessor, Chunk chunk) {

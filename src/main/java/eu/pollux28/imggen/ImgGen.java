@@ -14,6 +14,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,13 +24,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ImgGen implements ModInitializer {
-    public static final String VERSION = "1.1.1-beta.1";
+    public static final String VERSION = "1.1.2";
     public static final Logger logger = LogManager.getLogger();
     public static MainConfigData CONFIG;
     public static BiomeColorConverter biomeColorConverter;
     public static ScaledDataProvider<Biome> biomeDataProvider;
     public static HeightMapColorConverter heightMapColorConverter;
     public static NotScaledDataProvider<Integer> heightMapDataProvider;
+    public static StructureColorConverter structureColorConverter;
+    public static NotScaledDataProvider<ConfiguredStructureFeature> structureDataProvider;
 
     private ImgGenType imgGenType;
 

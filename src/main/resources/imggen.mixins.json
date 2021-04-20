@@ -12,7 +12,10 @@
     "MixinHoglinEntityInvoker",
     "MixinNetherForestSurfaceBuilder",
     "MixinNetherSurfaceBuilder",
-    "MixinValleySurfaceBuilder"
+    "MixinValleySurfaceBuilder",
+    "structures.MixinDesertTempleGenerator",
+    "structures.MixinJungleTempleGenerator",
+    "structures.MixinSwampHutGenerator"
   ],
   "injectors": {
     "defaultRequire": 1
