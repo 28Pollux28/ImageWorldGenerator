@@ -30,6 +30,7 @@ public class MainConfigData {
     public boolean repeatStructureImage= false;
     public boolean repeatMirrorStructureImage = false;
     public boolean useBlackList = false;
+    public byte blackListApplication = 2;
     public String[] structureBlacklist = {"modid:structureid","modid:structureid"};
     public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("modid:structureid","0x123456"), new StructureAndRGBPair("modid:structureid","0x024680"));
     public float lakeFormationPercentChance = 0.5f;

@@ -782,15 +782,18 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         int i = structureStart != null ? structureStart.getReferences() : 0;
         StructureConfig structureConfig = this.structuresConfig.getForType(configuredStructureFeature.feature);
         if(ImgGen.CONFIG.customStructures||ImgGen.CONFIG.useBlackList){
-            if(ImgGen.CONFIG.useBlackList){
-                if(this.structuresSource.configuredStructureFeaturesBlackList.contains(configuredStructureFeature.feature)) return;
-            }
             if (structureConfig != null) {
                 if(bl){
+                    if(ImgGen.CONFIG.useBlackList&&(ImgGen.CONFIG.blackListApplication ==1||ImgGen.CONFIG.blackListApplication ==2)){
+                        if(this.structuresSource.configuredStructureFeaturesBlackList.contains(configuredStructureFeature.feature)) return;
+                    }
                     StructureStart<FeatureConfig> structureStart2 = (StructureStart<FeatureConfig>) configuredStructureFeature.feature.createStart(chunkPos.x, chunkPos.z, BlockBox.empty(), i, worldSeed);
                     structureStart2.init(dynamicRegistryManager, this, structureManager, chunkPos.x, chunkPos.z, biome, configuredStructureFeature.config);
                     structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
                 }else{
+                    if(ImgGen.CONFIG.useBlackList&&(ImgGen.CONFIG.blackListApplication ==0||ImgGen.CONFIG.blackListApplication==2)){
+                        if(this.structuresSource.configuredStructureFeaturesBlackList.contains(configuredStructureFeature.feature)) return;
+                    }
                     StructureStart<?> structureStart2 = configuredStructureFeature.tryPlaceStart(dynamicRegistryManager, this, this.biomeSource, structureManager, worldSeed, chunkPos, biome, i, structureConfig);
                     structureAccessor.setStructureStart(ChunkSectionPos.from(chunk.getPos(), 0), configuredStructureFeature.feature, structureStart2, chunk);
                 }
