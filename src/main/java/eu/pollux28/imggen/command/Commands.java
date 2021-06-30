@@ -2,9 +2,9 @@ package eu.pollux28.imggen.command;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import eu.pollux28.imggen.ImgGen;
+import eu.pollux28.imggen.gen.biomes.ImgGenBiomeSource;
 import eu.pollux28.imggen.gen.chunk.ImgGenChunkGenerator;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
-import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.PosArgument;
 import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.network.MessageType;
@@ -42,11 +42,18 @@ public class Commands {
             DynamicRegistryManager dynamicRegistryManager = commandSource.getMinecraftServer().getRegistryManager();
             Identifier id = dynamicRegistryManager.get(Registry.BIOME_KEY).getId(biome);
             int height=-1;
+            int[] imageData = ((ImgGenBiomeSource)((ImgGenChunkGenerator)chunkGenerator).getBiomeSource()).getBiomeDataProvider().getImageCoordAndValue(pos.toAbsoluteBlockPos(commandSource).getX(),pos.toAbsoluteBlockPos(commandSource).getZ());
             if(ImgGen.CONFIG.customHeightMap){
                 height =((ImgGenChunkGenerator)chunkGenerator).heightMapSource.getHeight(pos.toAbsoluteBlockPos(commandSource).getX(),pos.toAbsoluteBlockPos(commandSource).getZ());
-                commandSource.getMinecraftServer().getPlayerManager().broadcastChatMessage(new LiteralText("Biome at : "+(pos.toAbsoluteBlockPos(commandSource).getX())+" "+(pos.toAbsoluteBlockPos(commandSource).getZ())+" is " + id.toString()+ " and height is "+ height),MessageType.SYSTEM,Util.NIL_UUID);
+                commandSource.getMinecraftServer().getPlayerManager().broadcastChatMessage(
+                        new LiteralText("Biome at : "+(pos.toAbsoluteBlockPos(commandSource).getX())
+                                + " "+(pos.toAbsoluteBlockPos(commandSource).getZ())+" is " + id.toString()+ " and height is "+ height
+                                + "Image rgb at" +imageData[0]+" "+imageData[1] +" is: "+Integer.toHexString(imageData[2])),MessageType.SYSTEM,Util.NIL_UUID);
             }
-                commandSource.getMinecraftServer().getPlayerManager().broadcastChatMessage(new LiteralText("Biome at : "+(pos.toAbsoluteBlockPos(commandSource).getX())+" "+(pos.toAbsoluteBlockPos(commandSource).getZ())+" is " + id.toString()),MessageType.SYSTEM,Util.NIL_UUID);
+                commandSource.getMinecraftServer().getPlayerManager().broadcastChatMessage(
+                        new LiteralText("Biome at : "+(pos.toAbsoluteBlockPos(commandSource).getX())
+                                + " "+(pos.toAbsoluteBlockPos(commandSource).getZ())+" is " + id.toString()
+                                + "Image rgb at" +imageData[0]+" "+imageData[1] +" is: "+Integer.toHexString(imageData[2])),MessageType.SYSTEM,Util.NIL_UUID);
         }else {
             commandSource.getMinecraftServer().getPlayerManager().broadcastChatMessage(new LiteralText("Not in a ImageWorldGenerator World !"),MessageType.SYSTEM,Util.NIL_UUID);
         }
