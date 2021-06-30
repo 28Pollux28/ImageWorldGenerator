@@ -23,7 +23,7 @@ public class MainConfigData {
     public float heightMapScale = 1;
     public boolean repeatHeightMapImage = false;
     public boolean repeatMirrorHeightMapImage = false;
-    public int seaLevel = 62;
+    public int seaLevel = 63;
     public boolean placeVanillaStructures = true;
     public boolean customStructures = false;
     public String customStructuresImage = "structureMap.png";

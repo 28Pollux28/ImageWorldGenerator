@@ -98,7 +98,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
     private final StructuresConfig structuresConfig;
     private StructuresSource structuresSource = null;
     public HeightMapSource heightMapSource = null;
-    private final int seaLevel;
+    private int seaLevel;
 
     public ImgGenChunkGenerator(BiomeSource biomeSource, long worldSeed, Supplier<ChunkGeneratorSettings> supplier) {
         this(biomeSource, biomeSource, worldSeed, supplier);
@@ -137,17 +137,11 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
         this.structuresConfig = supplier.get().getStructuresConfig();
         int seaLevel1 = settings.get().getSeaLevel();
         ImgGen.refreshConfig();
-        if(ImgGen.CONFIG.customHeightMap) {
-            seaLevel1 = ImgGen.CONFIG.seaLevel;
-            if (this.heightMapSource == null) {
-                this.heightMapSource = new HeightMapSource(seaLevel1);
-            }
-        }
         this.seaLevel = seaLevel1;
+        if(ImgGen.CONFIG.customHeightMap) {
+            this.seaLevel = ImgGen.CONFIG.seaLevel;
+        }
     }
-
-
-
 
     @Override
     protected Codec<? extends ChunkGenerator> getCodec() {
@@ -612,7 +606,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                                                 blockState = AIR;
                                             }
                                         }else{
-                                            if(v>seaLevel){
+                                            if(v>=seaLevel){
                                                 blockState=AIR;
                                             }else if(v<=height){
                                                 blockState=defaultBlock;
