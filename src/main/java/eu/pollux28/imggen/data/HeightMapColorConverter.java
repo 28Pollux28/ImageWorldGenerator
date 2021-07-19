@@ -1,6 +1,6 @@
 package eu.pollux28.imggen.data;
 
-public class HeightMapColorConverter implements ColorConverter{
+public class HeightMapColorConverter implements ColorConverter<Integer>{
 
     private final int defaultHeight;
 

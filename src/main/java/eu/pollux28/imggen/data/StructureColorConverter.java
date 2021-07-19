@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Level;
 import java.util.Comparator;
 import java.util.Map;
 
-public class StructureColorConverter implements ColorConverter<ConfiguredStructureFeature> {
+public class StructureColorConverter implements ColorConverter<ConfiguredStructureFeature<?,?>> {
     private final Map<Integer,ConfiguredStructureFeature<?,?>> structureColorMap;
     public StructureColorConverter(){
         this.structureColorMap = new Int2ObjectOpenHashMap<>();

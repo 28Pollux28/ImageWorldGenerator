@@ -1,13 +1,10 @@
 package eu.pollux28.imggen.gen.structures;
 
 import eu.pollux28.imggen.ImgGen;
-import eu.pollux28.imggen.config.MainConfigData;
 import eu.pollux28.imggen.data.StructureColorConverter;
 import eu.pollux28.imggen.data.StructureColors;
 import eu.pollux28.imggen.data.StructureDataProvider;
 import eu.pollux28.imggen.util.StructureAndRGBPair;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.registry.MutableRegistry;
@@ -15,11 +12,6 @@ import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import org.apache.logging.log4j.Level;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -27,51 +19,31 @@ public class StructuresSource {
 
     private final MutableRegistry<ConfiguredStructureFeature<?,?>> configuredStructureFeatures;
 
-    public HashSet<StructureFeature> configuredStructureFeaturesBlackList = new HashSet<>();
-    private final StructureColorConverter structureColorConverter;
-    private final StructureDataProvider structureDataProvider;
+    public HashSet<StructureFeature<?>> configuredStructureFeaturesBlackList = new HashSet<>();
+    private StructureColorConverter structureColorConverter;
+    private StructureDataProvider structureDataProvider;
 
     public StructuresSource(MutableRegistry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures) {
         this.configuredStructureFeatures = configuredStructureFeatures;
-        ImgGen.refreshConfig();
-        MainConfigData config = ImgGen.CONFIG;
-
-        boolean isClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
-        if(config.customStructures){
-            if (ImgGen.structureColorConverter == null || isClient) {
-                ImgGen.structureColorConverter = new StructureColorConverter();
-            }
-            structureColorConverter = ImgGen.structureColorConverter;
-            registerStructures();
-
-            if (ImgGen.structureDataProvider == null || isClient) {
-                BufferedImage image = loadImage(config.customStructuresImage);
-                ImgGen.structureDataProvider = new StructureDataProvider(ImgGen.structureColorConverter, image);
-
-            }
-            structureDataProvider = ImgGen.structureDataProvider;
-        }else{
-            structureColorConverter = null;
-            structureDataProvider = null;
-        }
-        if(config.useBlackList){
-            registerBlackList();
-        }
     }
-    private static BufferedImage loadImage(String pathname) {
-        BufferedImage img = null;
-        try {
-            Path configDir = Paths.get("", "imggen", "image", pathname);
-            img = ImageIO.read(configDir.toFile());
 
-        } catch (IOException e) {
-            e.getCause();
-            ImgGen.logger.log(Level.ERROR, "Couldn't find image at /imggen/image/" + pathname);
-        }
-
-        return img;
+    public StructureColorConverter getStructureColorConverter() {
+        return structureColorConverter;
     }
-    private void registerStructures(){
+
+    public void setStructureColorConverter(StructureColorConverter structureColorConverter) {
+        this.structureColorConverter = structureColorConverter;
+    }
+
+    public StructureDataProvider getStructureDataProvider() {
+        return structureDataProvider;
+    }
+
+    public void setStructureDataProvider(StructureDataProvider structureDataProvider) {
+        this.structureDataProvider = structureDataProvider;
+    }
+
+    public void registerStructures(){
         for(StructureColors structureColor:StructureColors.values()){
             structureColorConverter.RegisterStructure(structureColor.getRGB(),structureColor.getConfiguredStructureFeature());
         }
@@ -105,7 +77,7 @@ public class StructuresSource {
         }
 
     }
-    private void registerBlackList(){
+    public void registerBlackList(){
         for(String id : ImgGen.CONFIG.structureBlacklist){
             Identifier sID =getIdFromString(id);
             if(sID==null){
@@ -120,7 +92,7 @@ public class StructuresSource {
     }
 
     public ArrayList<?> getStructuresInPos(ChunkPos chunkPos){
-        ArrayList<ConfiguredStructureFeature> structureArray = new ArrayList<>();
+        ArrayList<ConfiguredStructureFeature<?,?>> structureArray = new ArrayList<>();
         for(int x = chunkPos.getStartX();x<= chunkPos.getEndX();x++){
             for(int z = chunkPos.getStartZ();z<= chunkPos.getEndZ();z++){
                 ConfiguredStructureFeature<?,?> configuredStructureFeature = structureDataProvider.GetData(x,z);

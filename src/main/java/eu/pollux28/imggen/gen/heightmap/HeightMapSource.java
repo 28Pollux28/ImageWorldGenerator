@@ -17,30 +17,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class HeightMapSource {
-    private final HeightMapColorConverter heightMapColorConverter;
-    public final HeightDataProvider heightMapDataProvider;
+    private HeightMapColorConverter heightMapColorConverter;
+    private HeightDataProvider heightMapDataProvider;
 
-    public HeightMapSource(int seaLevel) {
+    public HeightMapSource() {
         ImgGen.refreshConfig();
         MainConfigData config = ImgGen.CONFIG;
-
-        boolean isClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
-
-        if (ImgGen.heightMapColorConverter == null || isClient) {
-
-            ImgGen.heightMapColorConverter = new HeightMapColorConverter(seaLevel);
-        }
-        heightMapColorConverter = ImgGen.heightMapColorConverter;
-        if (ImgGen.heightMapDataProvider == null || isClient) {
-            BufferedImage image = loadImage(config.heightMapName);
-            if(config.heightMapScale != 1){
-                image = transformImage(image);
-            }
-            ImgGen.heightMapDataProvider = new HeightDataProvider(ImgGen.heightMapColorConverter, image);
-
-        }
-
-        heightMapDataProvider = ImgGen.heightMapDataProvider;
     }
 
     private static BufferedImage loadImage(String pathname) {
@@ -68,9 +50,23 @@ public class HeightMapSource {
     }
 
     public int getHeight(int x, int z){
-        return heightMapDataProvider.GetData(x,z);
+        return getHeightMapDataProvider().GetData(x,z);
     }
-    public boolean isInImage(int x,int z){ return heightMapDataProvider.isInImage(x,z);}
+    public boolean isInImage(int x,int z){ return getHeightMapDataProvider().isInImage(x,z);}
 
+    public HeightMapColorConverter getHeightMapColorConverter() {
+        return heightMapColorConverter;
+    }
 
+    public void setHeightMapColorConverter(HeightMapColorConverter heightMapColorConverter) {
+        this.heightMapColorConverter = heightMapColorConverter;
+    }
+
+    public HeightDataProvider getHeightMapDataProvider() {
+        return heightMapDataProvider;
+    }
+
+    public void setHeightMapDataProvider(HeightDataProvider heightMapDataProvider) {
+        this.heightMapDataProvider = heightMapDataProvider;
+    }
 }

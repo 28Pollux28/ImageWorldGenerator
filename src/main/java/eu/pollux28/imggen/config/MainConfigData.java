@@ -35,24 +35,7 @@ public class MainConfigData {
     public List<StructureAndRGBPair> customStructuresRGB = Arrays.asList(new StructureAndRGBPair("modid:structureid","0x123456"), new StructureAndRGBPair("modid:structureid","0x024680"));
     public float lakeFormationPercentChance = 0.5f;
 
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MainConfigData that = (MainConfigData) o;
-        return Double.compare(that.biomesImageScale, biomesImageScale) == 0 &&
-                Float.compare(that.lakeFormationPercentChance, lakeFormationPercentChance) == 0 &&
-                configVersion.equals(that.configVersion) &&
-                biomesImageName.equals(that.biomesImageName) &&
-                (defaultBiome.equals(that.defaultBiome)) &&
-                customBiomes== that.customBiomes;
-
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(configVersion, biomesImageName, defaultBiome, biomesImageScale, customBiomes, lakeFormationPercentChance);
-    }
+    public int segmentImageWidth = 512;
+    public int segmentImageHeight = 512;
+    public int imageCacheSize = 4;
 }

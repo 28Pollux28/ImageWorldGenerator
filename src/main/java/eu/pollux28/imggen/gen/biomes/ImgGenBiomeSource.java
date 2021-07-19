@@ -10,8 +10,6 @@ import eu.pollux28.imggen.data.BiomeColorConverter;
 import eu.pollux28.imggen.data.BiomeColors;
 import eu.pollux28.imggen.data.BiomeDataProvider;
 import eu.pollux28.imggen.util.BiomeIDAndRGBPair;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
@@ -61,42 +59,41 @@ public class ImgGenBiomeSource extends BiomeSource {
     private long seed;
     private final Registry<Biome> biomeRegistry;
 
-    private final BiomeColorConverter biomeColorConverter;
-    private final BiomeDataProvider biomeDataProvider;
+    private BiomeColorConverter biomeColorConverter;
+    private BiomeDataProvider biomeDataProvider;
     private final BiomeLayerSampler biomeSampler;
     private final boolean legacyBiomeInitLayer;
     private final boolean largeBiomes;
 
     public ImgGenBiomeSource(long seed, Registry<Biome> biomeRegistry,boolean legacyBiomeInitLayer,boolean largeBiomes) {
         super(BIOMES.stream().map((registryKey) -> () -> (Biome) biomeRegistry.getOrThrow(registryKey)));
-
         this.seed = seed;
         this.biomeRegistry = biomeRegistry;
         this.legacyBiomeInitLayer = legacyBiomeInitLayer;
         this.largeBiomes = largeBiomes;
         this.biomeSampler = BiomeLayers.build(seed, legacyBiomeInitLayer, largeBiomes ? 6 : 4, 4);
 
-        ImgGen.refreshConfig();
-        MainConfigData config = ImgGen.CONFIG;
-
-        boolean isClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
-
-        if (ImgGen.biomeColorConverter == null || isClient) {
-            Biome defaultBiome = getDefaultBiome();
-            ImgGen.biomeColorConverter = new BiomeColorConverter(defaultBiome,biomeSampler,biomeRegistry);
-            biomeColorConverter = ImgGen.biomeColorConverter;
-            registerBiomes();
-        } else {
-            biomeColorConverter = ImgGen.biomeColorConverter;
-        }
-        if (ImgGen.biomeDataProvider == null || isClient) {
-            BufferedImage image = loadImage(config.biomesImageName);
-            ImgGen.biomeDataProvider = new BiomeDataProvider(ImgGen.biomeColorConverter, image, config.biomesImageScale);
-
-        }
-
-
-        biomeDataProvider = ImgGen.biomeDataProvider;
+//        ImgGen.refreshConfig();
+//        MainConfigData config = ImgGen.CONFIG;
+//
+//        boolean isClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
+//
+//        if (ImgGen.biomeColorConverter == null || isClient) {
+//            Biome defaultBiome = getDefaultBiome();
+//            ImgGen.biomeColorConverter = new BiomeColorConverter(defaultBiome,biomeSampler,biomeRegistry);
+//            biomeColorConverter = ImgGen.biomeColorConverter;
+//            registerBiomes();
+//        } else {
+//            biomeColorConverter = ImgGen.biomeColorConverter;
+//        }
+//        if (ImgGen.biomeDataProvider == null || isClient) {
+//            BufferedImage image = loadImage(config.biomesImageName);
+//            ImgGen.biomeDataProvider = new BiomeDataProvider(ImgGen.biomeColorConverter, config.biomesImageScale,config.biomesImageName);
+//
+//        }
+//
+//
+//        biomeDataProvider = ImgGen.biomeDataProvider;
     }
 
     private static BufferedImage loadImage(String pathname) {
@@ -124,7 +121,7 @@ public class ImgGenBiomeSource extends BiomeSource {
         return this;
     }
 
-    private Biome getDefaultBiome(){
+    public Biome getDefaultBiome(){
         Identifier bID = getIdFromString(ImgGen.CONFIG.defaultBiome);
         if(bID == null) {
             return biomeRegistry.get(BiomeKeys.OCEAN);
@@ -136,7 +133,29 @@ public class ImgGenBiomeSource extends BiomeSource {
                 : biomeRegistry.get(BiomeKeys.OCEAN);
     }
 
-    private void registerBiomes() {
+
+
+    public BiomeLayerSampler getBiomeSampler() {
+        return biomeSampler;
+    }
+
+    public Registry<Biome> getBiomeRegistry() {
+        return biomeRegistry;
+    }
+
+    public BiomeColorConverter getBiomeColorConverter() {
+        return biomeColorConverter;
+    }
+
+    public void setBiomeColorConverter(BiomeColorConverter biomeColorConverter) {
+        this.biomeColorConverter = biomeColorConverter;
+    }
+
+    public void setBiomeDataProvider(BiomeDataProvider biomeDataProvider) {
+        this.biomeDataProvider = biomeDataProvider;
+    }
+
+    public void registerBiomes() {
         for (BiomeColors biomeColor : BiomeColors.values()) {
             RegistryKey<Biome> biomeKey = biomeColor.getBiome();
             Biome biome = biomeRegistry.get(biomeKey);
@@ -186,5 +205,9 @@ public class ImgGenBiomeSource extends BiomeSource {
         if (str.length != 2) {
             return null;
         } else return new Identifier(str[0], str[1]);
+    }
+
+    public BiomeDataProvider getBiomeDataProvider() {
+        return biomeDataProvider;
     }
 }
