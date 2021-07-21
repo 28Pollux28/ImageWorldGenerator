@@ -389,7 +389,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                 int p = l + n;
                 int q = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE_WG, m, n) + 1;
                 int z = this.seaLevel;
-                if(ImgGen.CONFIG.customHeightMap&& heightMapSource.getHeightMapDataProvider().isInImage(o,p)||ImgGen.CONFIG.repeatHeightMapImage){
+                if(ImgGen.CONFIG.customHeightMap&& (heightMapSource.getHeightMapDataProvider().isInImage(o,p)||ImgGen.CONFIG.repeatHeightMapImage)){
                     z = heightMapSource.getHeight(o,p)+1;
                 }
                 double e = this.surfaceDepthNoise.sample((double)o * 0.0625D, (double)p * 0.0625D, 0.0625D, (double)m * 0.0625D) * 15.0D;
@@ -440,7 +440,7 @@ public class ImgGenChunkGenerator extends ChunkGenerator{
                     }
                 } while(!bl2);
                 Biome biome2 = this.biomeSource.getBiomeForNoiseGen(blockPos.getX()>>2,0, blockPos.getZ()>>2);
-                if(biome2.getGenerationSettings().getSurfaceBuilder().get().surfaceBuilder != ConfiguredSurfaceBuilders.NOPE.surfaceBuilder){
+                if(ImgGen.registryManager.get(Registry.BIOME_KEY).getId(biome2) == BiomeKeys.THE_VOID.getValue()){
                     for(o = 4; o >= 0; --o) {
                         if (o <= random.nextInt(5)) {
                             chunk.setBlockState(mutable.set(blockPos.getX(), k + o, blockPos.getZ()), Blocks.BEDROCK.getDefaultState(), false);

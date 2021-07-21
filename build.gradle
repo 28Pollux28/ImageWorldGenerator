@@ -24,6 +24,7 @@ dependencies {
 	//Fabric api
 	modImplementation "net.fabricmc.fabric-api:fabric-api:0.29.4+1.16"
 	implementation 'com.alexdupre:pngj:2.1.2.1'
+	include 'com.alexdupre:pngj:2.1.2.1'
 	/*modImplementation "com.telepathicgrunt.repurposed_structures:repurposed_structures-1.16.3:1.6.9"
 	modImplementation "me.shedaniel.cloth:config-2:4.8.3"
 	include "me.shedaniel.cloth:config-2:4.8.3"

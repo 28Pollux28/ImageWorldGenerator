@@ -15,6 +15,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import org.apache.commons.io.FileUtils;
@@ -29,7 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ImgGen implements ModInitializer {
-    public static final String VERSION = "1.2.0";
+    public static final String VERSION = "1.3.0";
     public static final Logger logger = LogManager.getLogger();
     public static MainConfigData CONFIG;
     public static BiomeColorConverter biomeColorConverter;
@@ -40,6 +41,7 @@ public class ImgGen implements ModInitializer {
     public static StructureDataProvider structureDataProvider;
 
     private ImgGenType imgGenType;
+    public static DynamicRegistryManager registryManager;
 
 
     @Override
@@ -70,6 +72,7 @@ public class ImgGen implements ModInitializer {
 
     private ServerWorldEvents.Load getListener() {
         return (server, world) -> {
+            registryManager = world.getRegistryManager();
             ChunkGenerator chunkGenerator = world.getChunkManager().getChunkGenerator();
             if (chunkGenerator instanceof ImgGenChunkGenerator) {
                 ImgGenChunkGenerator imgGenChunkGenerator = (ImgGenChunkGenerator) chunkGenerator;
