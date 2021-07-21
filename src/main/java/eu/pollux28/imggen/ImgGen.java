@@ -15,6 +15,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import org.apache.commons.io.FileUtils;
@@ -29,7 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ImgGen implements ModInitializer {
-    public static final String VERSION = "1.2.0";
+    public static final String VERSION = "1.3.0-0";
     public static final Logger logger = LogManager.getLogger();
     public static MainConfigData CONFIG;
     public static BiomeColorConverter biomeColorConverter;
@@ -38,6 +39,7 @@ public class ImgGen implements ModInitializer {
     public static HeightDataProvider heightMapDataProvider;
     public static StructureColorConverter structureColorConverter;
     public static StructureDataProvider structureDataProvider;
+    public static DynamicRegistryManager registryManager;
 
     private ImgGenType imgGenType;
 
@@ -72,6 +74,7 @@ public class ImgGen implements ModInitializer {
         return (server, world) -> {
             ChunkGenerator chunkGenerator = world.getChunkManager().getChunkGenerator();
             if (chunkGenerator instanceof ImgGenChunkGenerator) {
+                registryManager = world.getRegistryManager();
                 ImgGenChunkGenerator imgGenChunkGenerator = (ImgGenChunkGenerator) chunkGenerator;
                 ImgGenBiomeSource biomeSource = (ImgGenBiomeSource) imgGenChunkGenerator.getBiomeSource();
                 refreshConfig();
@@ -97,7 +100,7 @@ public class ImgGen implements ModInitializer {
                 }
                 //StructureSource
                 if(CONFIG.customStructures){
-                    imgGenChunkGenerator.setStructuresSource(new StructuresSource(world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN)));
+                    imgGenChunkGenerator.setStructuresSource(new StructuresSource(registryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY)));
                     structureColorConverter = new StructureColorConverter();
                     imgGenChunkGenerator.getStructuresSource().setStructureColorConverter(structureColorConverter);
                     imgGenChunkGenerator.getStructuresSource().registerStructures();

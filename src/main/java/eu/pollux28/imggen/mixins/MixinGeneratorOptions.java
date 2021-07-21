@@ -51,13 +51,13 @@ public class MixinGeneratorOptions {
             ImgGen.refreshConfig();
             Registry<DimensionType> dimensionTypes = dynamicRegistryManager.get(Registry.DIMENSION_TYPE_KEY);
             Registry<Biome> biomes = dynamicRegistryManager.get(Registry.BIOME_KEY);
-            MutableRegistry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures = dynamicRegistryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN);
-            Registry<ChunkGeneratorSettings> chunkGeneratorSettings = dynamicRegistryManager.get(Registry.NOISE_SETTINGS_WORLDGEN);
+            Registry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures = dynamicRegistryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY);
+            Registry<ChunkGeneratorSettings> chunkGeneratorSettings = dynamicRegistryManager.get(Registry.CHUNK_GENERATOR_SETTINGS_KEY);
             SimpleRegistry<DimensionOptions> dimensions = DimensionType.createDefaultDimensionOptions(dimensionTypes, biomes, chunkGeneratorSettings, l);
             String generate_structures = (String) properties.get("generate-structures");
             boolean generateStructures = generate_structures == null || Boolean.parseBoolean(generate_structures) || ImgGen.CONFIG.customStructures || ImgGen.CONFIG.placeVanillaStructures;
             BiomeSource biomeSource = new ImgGenBiomeSource(l, biomes,false,ImgGen.CONFIG.largeBiomes);
-            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.method_28608(dimensionTypes, dimensions, new ImgGenChunkGenerator(biomeSource, l, () -> chunkGeneratorSettings.get(ChunkGeneratorSettings.OVERWORLD), configuredStructureFeatures))));
+            cir.setReturnValue(new GeneratorOptions(l, generateStructures, false, GeneratorOptions.getRegistryWithReplacedOverworldGenerator(dimensionTypes, dimensions, new ImgGenChunkGenerator(biomeSource, l, () -> chunkGeneratorSettings.get(ChunkGeneratorSettings.OVERWORLD), configuredStructureFeatures))));
         }
     }
 }

@@ -8,6 +8,7 @@ import eu.pollux28.imggen.util.StructureAndRGBPair;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.registry.MutableRegistry;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import org.apache.logging.log4j.Level;
@@ -17,13 +18,13 @@ import java.util.HashSet;
 
 public class StructuresSource {
 
-    private final MutableRegistry<ConfiguredStructureFeature<?,?>> configuredStructureFeatures;
+    private final Registry<ConfiguredStructureFeature<?,?>> configuredStructureFeatures;
 
     public HashSet<StructureFeature<?>> configuredStructureFeaturesBlackList = new HashSet<>();
     private StructureColorConverter structureColorConverter;
     private StructureDataProvider structureDataProvider;
 
-    public StructuresSource(MutableRegistry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures) {
+    public StructuresSource(Registry<ConfiguredStructureFeature<?, ?>> configuredStructureFeatures) {
         this.configuredStructureFeatures = configuredStructureFeatures;
     }
 

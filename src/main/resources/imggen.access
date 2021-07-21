@@ -1,5 +1,13 @@
 accessWidener v1 named
 
 accessible method net/minecraft/client/world/GeneratorType <init> (Ljava/lang/String;)V
-accessible method net/minecraft/world/gen/feature/StructureFeature createStart (IILnet/minecraft/util/math/BlockBox;IJ)Lnet/minecraft/structure/StructureStart;
+accessible method net/minecraft/world/gen/feature/StructureFeature createStart (Lnet/minecraft/util/math/ChunkPos;IJ)Lnet/minecraft/structure/StructureStart;
 accessible method net/minecraft/structure/StructureStart randomUpwardTranslation (Ljava/util/Random;II)V
+accessible method net/minecraft/world/gen/chunk/ChunkGeneratorSettings isMobGenerationDisabled ()Z
+accessible method net/minecraft/world/gen/chunk/ChunkGeneratorSettings hasAquifers ()Z
+accessible method net/minecraft/world/gen/StructureWeightSampler getWeight (III)D
+accessible method net/minecraft/world/gen/chunk/ChunkGeneratorSettings hasNoodleCaves ()Z
+accessible method net/minecraft/world/gen/chunk/ChunkGeneratorSettings hasNoiseCaves ()Z
+accessible method net/minecraft/world/gen/chunk/ChunkGeneratorSettings hasDeepslate ()Z
+accessible method net/minecraft/world/gen/chunk/ChunkGeneratorSettings hasOreVeins ()Z
+accessible method net/minecraft/world/gen/StructureWeightSampler <init> (Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/world/chunk/Chunk;)V

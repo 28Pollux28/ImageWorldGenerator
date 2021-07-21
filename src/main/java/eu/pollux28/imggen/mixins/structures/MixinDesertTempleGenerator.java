@@ -22,7 +22,7 @@ public class MixinDesertTempleGenerator {
     public void fixedYImgGen(StructureWorldAccess structureWorldAccess, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, Random random, BlockBox boundingBox, ChunkPos chunkPos, BlockPos blockPos, CallbackInfoReturnable cir){
         if(chunkGenerator instanceof ImgGenChunkGenerator){
             BlockBox blockBox = ((DesertTempleGenerator)(Object)this).getBoundingBox();
-            blockBox.move(0,chunkGenerator.getHeight(blockBox.getCenter().getX(),blockBox.getCenter().getZ(), Heightmap.Type.WORLD_SURFACE_WG)-blockBox.minY,0);
+            blockBox.move(0,chunkGenerator.getHeight(blockBox.getCenter().getX(), blockBox.getCenter().getZ(),Heightmap.Type.WORLD_SURFACE_WG, structureWorldAccess.getChunk(blockPos))-blockBox.getMinY(),0);
         }
     }
     
