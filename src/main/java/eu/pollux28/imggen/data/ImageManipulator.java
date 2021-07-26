@@ -126,8 +126,8 @@ public class ImageManipulator {
 //    }
 
     public boolean isInLoadedImages(int[] pos){
-        for(int i =0; i<4;i++){
-            if(Arrays.equals(pos,this.loadedImgPosCache[i])){
+        for (int[] ints : this.loadedImgPosCache) {
+            if (Arrays.equals(pos, ints)) {
                 return true;
             }
         }
@@ -147,12 +147,12 @@ public class ImageManipulator {
     }
 
     private void putInCache(int[] pos, BufferedImage image){
-        for(int i =0; i<3;i++){
+        for(int i =0; i<this.loadedImgPosCache.length-1;i++){
             this.loadedImgPosCache[i] = this.loadedImgPosCache[i+1];
             this.loadedImagesCache[i] = this.loadedImagesCache[i+1];
         }
-        this.loadedImgPosCache[3] = pos;
-        this.loadedImagesCache[3] = image;
+        this.loadedImgPosCache[this.loadedImgPosCache.length-1] = pos;
+        this.loadedImagesCache[this.loadedImagesCache.length-1] = image;
     }
 
     public int getRGB(int x,int y){
@@ -160,7 +160,7 @@ public class ImageManipulator {
         if(!isInLoadedImages(pos)){
             putInCache(pos,getImage(x,y));
         }
-        for(int i = 0; i<4;i++){
+        for(int i = 0; i<this.loadedImgPosCache.length;i++){
             if(Arrays.equals(pos,this.loadedImgPosCache[i])){
                 int localX = x%maxWidth;
                 int localY = y%maxHeight;
